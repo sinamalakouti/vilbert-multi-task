@@ -400,7 +400,7 @@ def LoadDatasets(args, task_cfg, ids, split="trainval"):
     task_feature_reader1 = {}
     task_feature_reader2 = {}
     for i, task_id in enumerate(ids):
-        task = "TASK" + task_id
+        task = "TASK" + task_id + "1"
         if task_cfg[task]["features_h5path1"] not in task_feature_reader1:
             task_feature_reader1[task_cfg[task]["features_h5path1"]] = None
         if task_cfg[task]["features_h5path2"] not in task_feature_reader2:

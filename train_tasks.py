@@ -238,7 +238,9 @@ def main():
 
     task_names = []
     task_lr = []
+    task_id = 1
     for i, task_id in enumerate(args.tasks.split("-")):
+        task_id = str(1)
         task = "TASK" + task_id
         name = task_cfg[task]["name"]
         task_names.append(name)

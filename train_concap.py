@@ -28,9 +28,9 @@ from pytorch_transformers.optimization import AdamW, WarmupLinearSchedule
 
 import vilbert.utils as utils
 from vilbert.datasets import ConceptCapLoaderTrain, ConceptCapLoaderVal
-from vilbert.vilbert import BertForMultiModalPreTraining, BertConfig
 import torch.distributed as dist
 
+from vilbert.vilbert import BertForMultiModalPreTraining, BertConfig
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",

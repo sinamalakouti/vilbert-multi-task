@@ -20,7 +20,7 @@ from torch.nn import CrossEntropyLoss
 import torch.nn.functional as F
 from torch.nn.utils.weight_norm import weight_norm
 
-from .utils import PreTrainedModel
+from vilbert.utils import PreTrainedModel
 import pdb
 
 logger = logging.getLogger(__name__)
@@ -1648,6 +1648,7 @@ class VILBertForVLTasks(BertPreTrainedModel):
         output_all_encoded_layers=False,
         output_all_attention_masks=False,
     ):
+
 
         sequence_output_t, sequence_output_v, pooled_output_t, pooled_output_v, all_attention_mask = self.bert(
             input_txt,

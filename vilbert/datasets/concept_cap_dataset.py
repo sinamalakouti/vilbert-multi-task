@@ -523,6 +523,7 @@ class BertPreprocessBatch(object):
         rand_doc_idx = random.randint(0, self.num_caps - 1)
         caption = self.captions[rand_doc_idx]
 
+
         return caption
 
     def convert_example_to_features(
