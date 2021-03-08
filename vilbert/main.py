@@ -311,5 +311,5 @@ if __name__ == '__main__':
     # print(cap.shape)
     # print(images.shape)
     # print(images)
-    images = np.load("../data/discoursedata/trian/all_images.npy").ravel()
-    download_images(images,"../data/discoursedata/train/", "../data/discoursedata/train/images",'test')
+    images = np.load("../data/discoursedata/train/all_images.npy").ravel()
+    download_images(images,"../data/discoursedata/train/", "../data/discoursedata/train/images",'train')
