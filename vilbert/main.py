@@ -80,10 +80,11 @@ def image_found(ind, pic_url):
 def download_images(images_url, dir_url, output_path, train_test):
 
     labels_headers = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant']
-
-    all_captions = np.load(dir_url + "all_captions_{}.npy".format(train_test), allow_pickle=True)
+    all_captions = np.load(dir_url + "all_captions.npy", allow_pickle=True)
+    # all_captions = np.load(dir_url + "all_captions_{}.npy".format(train_test), allow_pickle=True)
     all_captions = all_captions.ravel()
-    all_targets = pd.read_csv( dir_url + "all_annotations_{}.csv".formats(train_test), index_col= 0)
+    # all_targets = pd.read_csv( dir_url + "all_annotations_{}.csv".formats(train_test), index_col= 0)
+    all_targets = pd.read_csv(dir_url + "all_annotations.csv", index_col=0)
     print(len(all_captions))
     print(len(images_url))
     captions = {}
