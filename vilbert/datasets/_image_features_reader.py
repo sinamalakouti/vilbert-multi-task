@@ -46,6 +46,7 @@ class ImageFeaturesH5Reader(object):
         # with h5py.File(self.features_h5path, "r", libver='latest', swmr=True) as features_h5:
         # self._image_ids = list(features_h5["image_ids"])
         # If not loaded in memory, then list of None.
+        print("datapath   ", self.features_path)
         self.env = lmdb.open(
             self.features_path,
             max_readers=1,
@@ -67,7 +68,9 @@ class ImageFeaturesH5Reader(object):
         return len(self._image_ids)
 
     def __getitem__(self, image_id):
-        image_id = str(image_id).encode()
+        if image_id >= len(self.features):
+            raise  IndexError
+        image_id = str("pic" + str(image_id)).encode()
         index = self._image_ids.index(image_id)
         if self._in_memory:
             # Load features during first epoch, all not loaded together as it
@@ -174,8 +177,10 @@ class ImageFeaturesH5Reader(object):
                 image_location_ori = np.concatenate(
                     [np.expand_dims(g_location_ori, axis=0), image_location_ori], axis=0
                 )
+        if type(image_id) == bytes:
+            image_id = image_id.decode()
 
-        return features, num_boxes, image_location, image_location_ori
+        return features, num_boxes, image_location, image_location_ori, [image_id]
 
     def keys(self) -> List[int]:
         return self._image_ids

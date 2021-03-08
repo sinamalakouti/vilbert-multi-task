@@ -310,7 +310,8 @@ def ForwardModelsTrain(
         )
 
     task_tokens = question.new().resize_(question.size(0), 1).fill_(int(task_id[4:]))
-    vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ = model(
+    vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ = \
+        model(
         question,
         features,
         spatials,
@@ -400,7 +401,7 @@ def LoadDatasets(args, task_cfg, ids, split="trainval"):
     task_feature_reader1 = {}
     task_feature_reader2 = {}
     for i, task_id in enumerate(ids):
-        task = "TASK" + task_id + "1"
+        task = "TASK" + task_id
         if task_cfg[task]["features_h5path1"] not in task_feature_reader1:
             task_feature_reader1[task_cfg[task]["features_h5path1"]] = None
         if task_cfg[task]["features_h5path2"] not in task_feature_reader2:
@@ -442,26 +443,44 @@ def LoadDatasets(args, task_cfg, ids, split="trainval"):
             % (task_cfg[task]["name"], batch_size)
         )
 
+
         task_datasets_train[task] = None
         if "train" in split:
             task_datasets_train[task] = DatasetMapTrain[task_name](
-                task=task_cfg[task]["name"],
-                dataroot=task_cfg[task]["dataroot"],
-                annotations_jsonpath=task_cfg[task]["train_annotations_jsonpath"],
-                split=task_cfg[task]["train_split"],
-                image_features_reader=task_feature_reader1[
-                    task_cfg[task]["features_h5path1"]
-                ],
-                gt_image_features_reader=task_feature_reader2[
-                    task_cfg[task]["features_h5path2"]
-                ],
-                tokenizer=tokenizer,
-                bert_model=args.bert_model,
-                clean_datasets=args.clean_train_sets,
-                padding_index=0,
-                max_seq_length=task_cfg[task]["max_seq_length"],
-                max_region_num=task_cfg[task]["max_region_num"],
+                task_cfg[task]["dataroot"],
+                tokenizer,
+                args.bert_model,
+                task_cfg[task]["max_seq_length"],
+                encoding="utf-8",
+                visual_target=0,
+                batch_size=512,
+                shuffle=False,
+                num_workers=25,
+                cache=5000,
+                drop_last=False,
+                cuda=False,
+                objective=0,
+                visualization=False,
             )
+
+            # task_datasets_train[task] = DatasetMapTrain[task_name](
+            #     task=task_cfg[task]["name"],
+            #     dataroot=task_cfg[task]["dataroot"],
+            #     annotations_jsonpath=task_cfg[task]["train_annotations_jsonpath"],
+            #     split=task_cfg[task]["train_split"],
+            #     image_features_reader=task_feature_reader1[
+            #         task_cfg[task]["features_h5path1"]
+            #     ],
+            #     gt_image_features_reader=task_feature_reader2[
+            #         task_cfg[task]["features_h5path2"]
+            #     ],
+            #     tokenizer=tokenizer,
+            #     bert_model=args.bert_model,
+            #     clean_datasets=args.clean_train_sets,
+            #     padding_index=0,
+            #     max_seq_length=task_cfg[task]["max_seq_length"],
+            #     max_region_num=task_cfg[task]["max_region_num"],
+            # )
 
         task_datasets_val[task] = None
         if "val" in split:

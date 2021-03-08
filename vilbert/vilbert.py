@@ -419,6 +419,8 @@ class BertSelfAttention(nn.Module):
             self.attention_head_size,
         )
         x = x.view(*new_x_shape)
+
+        print(x.shape)
         return x.permute(0, 2, 1, 3)
 
     def forward(self, hidden_states, attention_mask):
@@ -566,6 +568,8 @@ class BertImageSelfAttention(nn.Module):
             self.attention_head_size,
         )
         x = x.view(*new_x_shape)
+        print("2222")
+        print(x.shape)
         return x.permute(0, 2, 1, 3)
 
     def forward(self, hidden_states, attention_mask, txt_embedding, txt_attention_mask):
@@ -733,6 +737,8 @@ class BertBiAttention(nn.Module):
             self.attention_head_size,
         )
         x = x.view(*new_x_shape)
+        print("3333")
+        print(x.shape)
         return x.permute(0, 2, 1, 3)
 
     def forward(
@@ -954,6 +960,7 @@ class BertEncoder(nn.Module):
         all_attention_mask_c = []
 
         batch_size, num_words, t_hidden_size = txt_embedding.size()
+
         _, num_regions, v_hidden_size = image_embedding.size()
 
         use_co_attention_mask = False
@@ -1607,6 +1614,7 @@ class VILBertForVLTasks(BertPreTrainedModel):
         self.cls = BertPreTrainingHeads(
             config, self.bert.embeddings.word_embeddings.weight
         )
+        self.discourse_prediction = Discourse_classifier(config.bi_hidden_size, config.bi_hidden_size * 2, 5, 0.5)
         self.vil_prediction = SimpleClassifier(
             config.bi_hidden_size, config.bi_hidden_size * 2, 3129, 0.5
         )
@@ -1681,6 +1689,7 @@ class VILBertForVLTasks(BertPreTrainedModel):
             pooled_output = self.dropout(pooled_output_t * pooled_output_v)
         else:
             assert False
+        discourse_prediction = self.discourse_prediction(pooled_output)
 
         vil_prediction = self.vil_prediction(pooled_output)
         vil_prediction_gqa = self.vil_prediction_gqa(pooled_output)
@@ -1694,8 +1703,8 @@ class VILBertForVLTasks(BertPreTrainedModel):
             (1.0 - image_attention_mask) * -10000.0
         ).unsqueeze(2).to(dtype=next(self.parameters()).dtype)
         linguisic_logit = self.linguisic_logit(self.dropout(sequence_output_t))
-
         return (
+            discourse_prediction,
             vil_prediction,
             vil_prediction_gqa,
             vil_logit,
@@ -1708,6 +1717,22 @@ class VILBertForVLTasks(BertPreTrainedModel):
             all_attention_mask,
         )
 
+
+
+
+class Discourse_classifier(nn.Module):
+    def __init__(self, in_dim, hid_dim, out_dim, dropout):
+        super().__init__()
+        self.logit_fc = nn.Sequential(
+            nn.Linear(in_dim, hid_dim),
+            GeLU(),
+            BertLayerNorm(hid_dim, eps=1e-12),
+            nn.Linear(hid_dim, out_dim),
+            nn.Sigmoid()
+        )
+
+    def forward(self, hidden_states):
+        return self.logit_fc(hidden_states)
 
 class SimpleClassifier(nn.Module):
     def __init__(self, in_dim, hid_dim, out_dim, dropout):

@@ -1,3 +1,23 @@
+TASK0:
+  name: Discourse
+  type: VL-classifier
+  loss: BCEWithLogitLoss
+  process: normal
+  task_id: 0
+  dataroot: /Users/sinamalakouti/PycharmProjects/vilbert-multi-task/data/discoursedata/test/
+  test_dataroot:  '/Users/sinamalakouti/PycharmProjects/vilbert-multi-task/data/discoursedata'
+  features_h5path1: '/Users/sinamalakouti/PycharmProjects/vilbert-multi-task/data/discoursedata'
+  features_h5path2: ''
+  train_annotations_jsonpath: ''
+  val_annotations_jsonpath: ''
+  max_seq_length: 23
+  max_region_num: 101
+  batch_size: 128
+  eval_batch_size: 1024
+  train_split: train
+  val_split: minval
+  lr: 0.00004
+  num_epoch: 20
 TASK1:
   name: VQA
   type: VL-classifier
@@ -15,8 +35,8 @@ TASK1:
   eval_batch_size: 1024
   train_split: trainval
   val_split: minval
-  lr: 0.00004
   num_epoch: 20
+  lr: 0.00004
 TASK2:
   name: GenomeQA
   type: VL-classifier

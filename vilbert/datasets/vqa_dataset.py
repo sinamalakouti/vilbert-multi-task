@@ -5,7 +5,7 @@
 
 import os
 import json
-import _pickle as cPickle
+import pickle as cPickle
 import logging
 
 import numpy as np
@@ -187,7 +187,7 @@ class VQAClassificationDataset(Dataset):
         self._padding_index = padding_index
 
         clean_train = "_cleaned" if clean_datasets else ""
-
+    
         if "roberta" in bert_model:
             cache_path = os.path.join(
                 dataroot,

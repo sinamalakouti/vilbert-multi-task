@@ -24,7 +24,7 @@ from .guesswhat_dataset import GuessWhatDataset
 from .visual7w_pointing_dataset import Visual7wPointingDataset
 from .guesswhat_pointing_dataset import GuessWhatPointingDataset
 from .flickr_grounding_dataset import FlickrGroundingDataset
-
+from .discourse_relation_dataset import DiscourseRelationDataset
 # from .flickr_retreival_dataset import FlickrRetreivalDatasetTrain, FlickrRetreivalDatasetVal
 __all__ = [
     "FoilClassificationDataset",
@@ -46,10 +46,12 @@ __all__ = [
     "Visual7wPointingDataset",
     "GuessWhatPointingDataset",
     "FlickrGroundingDataset",
+    "DiscourseRelationDataset",
     "",
 ]
 
 DatasetMapTrain = {
+    "Discourse": DiscourseRelationDataset,
     "VQA": VQAClassificationDataset,
     "GenomeQA": GenomeQAClassificationDataset,
     "VisualDialog": VisDialDataset,
