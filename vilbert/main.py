@@ -117,8 +117,7 @@ def download_images(images_url, dir_url, output_path, train_test):
                 print(response)
                 print(all_captions[ind])
                 print("[INFO] error downloading {}...skipping".format(ind))
-        if ind == 10:
-            break
+        
     with open( dir_url + 'captions_all_json.json', 'w') as outfile:
         json.dump(captions, outfile)
 
