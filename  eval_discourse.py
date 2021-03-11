@@ -605,6 +605,7 @@ def main():
                 # )
 
             for step, batch in enumerate(train_loader):
+                batch = tuple(t.cuda(device=device, non_blocking=True) for t in batch)
                 input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
                 true_targets = []
                 for id in image_id:
