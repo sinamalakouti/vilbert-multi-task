@@ -584,7 +584,7 @@ def main():
     target_path = os.path.join(task_cfg[task]["dataroot"], "all_targets_json.json")
     all_targets =  json.load(open(target_path, "r"))
     model.cuda(device)
-
+    print(next(model.parameters()).is_cuda)
     for epochId in range(int(start_epoch), int(args.num_train_epochs)):
         model.train()
         is_forward = True
@@ -607,12 +607,18 @@ def main():
 
             for step, batch in enumerate(train_loader):
                 batch = tuple( t.cuda(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
+                print( "check device")
+                for b in batch:
+                    if type(b) == torch.Tensor:
+                        print(b.device)
                 input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
                 true_targets = []
                 for id in image_id:
                     true_targets.append(np.fromiter(all_targets[id].values(), dtype = np.double))
                 true_targets = torch.from_numpy(np.array(true_targets))
+                true_targets = true_targets.to(device)
                 model.double()
+                model = model.to(device)
                 discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _\
                     = model(
                     input_ids,
