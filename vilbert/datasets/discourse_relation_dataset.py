@@ -322,13 +322,21 @@ class DiscourseRelationDataset(object):
         objective=0,
         visualization=False,
     ):
-        self.labels_header = labels_header
+
+        self.seq_len = seq_len
+        self.region_len = 101
+        # self.labels_header = labels_header
         lmdb_file = os.path.join(dataroot)
         caption_path = os.path.join(dataroot, "captions_all_json.json")
         print("Loading from %s" % lmdb_file)
         ds = ImageFeaturesH5Reader(
             lmdb_file, True
         )
+
+        self.image_reader = ImageFeaturesH5Reader(
+            lmdb_file, True
+        )
+        self.image_name = self.image_reader.keys()
         # ds = td.LMDBSerializer.load(lmdb_file, shuffle=False)
         self.num_dataset = len(ds)
         preprocess_function = BertPreprocessBatch(
@@ -343,15 +351,135 @@ class DiscourseRelationDataset(object):
             visualization=visualization,
             objective=objective,
         )
-        print("jiz goool jiz gooool")
-        ds = td.MapData(ds, preprocess_function)
-
-        self.ds = td.BatchData(ds, batch_size, remainder=True)
+        self.ds = td.MapData(ds, preprocess_function)
+        self.tokenizer = tokenizer
+        # self.ds = td.BatchData(ds, batch_size, remainder=True)
         print("man ye kharama ")
         # self.ds.reset_state()
+        self.captions = json.load(open(caption_path, "r"))
 
         self.batch_size = batch_size
         self.num_workers = num_workers
+    def _truncate_seq_pair(self, tokens_b, max_length):
+        """Truncates a sequence pair in place to the maximum length."""
+
+        # This is a simple heuristic which will always truncate the longer sequence
+        # one token at a time. This makes more sense than truncating an equal percent
+        # of tokens from each, since if one sequence is very short then each token
+        # that's truncated likely contains more information than a longer sequence.
+        while True:
+            total_length = len(tokens_b)
+            if total_length <= max_length:
+                break
+
+            tokens_b.pop()
+
+
+    def convert_example_to_features(
+        self, example, max_seq_length, tokenizer, max_region_length
+    ):
+        """
+        """
+        image_feat = example.image_feat
+        tokens = example.caption
+        image_loc = example.image_loc
+        # image_target = example.image_target
+        num_boxes = int(example.num_boxes)
+        # overlaps = example.overlaps
+
+        self._truncate_seq_pair(tokens, max_seq_length - 2)
+
+        # tokens, tokens_label = self.random_word(tokens, tokenizer, is_next)
+        # image_feat, image_loc, image_label, masked_label = self.random_region(
+        #     image_feat, image_loc, num_f, is_next, overlaps
+        # )
+
+        # concatenate lm labels and account for CLS, SEP, SEP
+        # lm_label_ids = [-1] + tokens_label + [-1]
+        tokens = tokenizer.add_special_tokens_single_sentence(tokens)
+        segment_ids = [0] * len(tokens)
+
+        input_ids = tokens  # tokenizer.convert_tokens_to_ids(tokens)
+
+        # The mask has 1 for real tokens and 0 for padding tokens. Only real
+        # tokens are attended to.
+        # input_ids = input_ids[:1] input_ids[1:]
+        input_mask = [1] * (len(input_ids))
+        image_mask = [1] * (num_boxes)
+        # Zero-pad up to the visual sequence length.
+        while len(image_mask) < max_region_length:
+            image_mask.append(0)
+            # image_label.append(-1)
+
+        # Zero-pad up to the sequence length.
+        while len(input_ids) < max_seq_length:
+            input_ids.append(0)
+            input_mask.append(0)
+            segment_ids.append(0)
+            # lm_label_ids.append(-1)
+
+        assert len(input_ids) == max_seq_length
+        assert len(input_mask) == max_seq_length
+        assert len(segment_ids) == max_seq_length
+        # assert len(lm_label_ids) == max_seq_length
+        assert len(image_mask) == max_region_length
+        # assert len(image_label) == max_region_length
+
+        features = InputFeatures(
+            input_ids=np.array(input_ids),
+            input_mask=np.array(input_mask),
+            segment_ids=np.array(segment_ids),
+            # lm_label_ids=np.array(lm_label_ids),
+            # is_next=np.array(example.is_next),
+            image_feat=image_feat,
+            # image_target=image_target,
+            image_loc=image_loc,
+            # image_label=np.array(image_label),
+            image_mask=np.array(image_mask),
+            # masked_label=masked_label,
+        )
+        return features
+    #todo complete this
+    def __getitem__(self, index):
+
+        image_id = self.image_name[index]
+        image_feature, num_boxes, image_location, _, _ = self.image_reader[image_id]
+        caption = self.captions[image_id.decode()]
+        tokens_caption = self.tokenizer.encode(caption)
+        tokens = tokens_caption
+
+        cur_example = InputExample(
+            image_feat=image_feature,
+            # image_target=image_target,
+            caption=tokens,
+            image_loc=image_location,
+            num_boxes=num_boxes,
+            # overlaps=overlaps,
+        )
+
+        cur_features = self.convert_example_to_features(
+            cur_example, self.seq_len, self.tokenizer, self.region_len
+        )
+
+        #
+        batch = (
+            cur_features.input_ids,
+            cur_features.input_mask,
+            cur_features.segment_ids,
+            # lm_label_ids,
+            # is_next,
+            cur_features.image_feat,
+            cur_features.image_loc,
+            # image_target,
+            # image_label,
+            cur_features.image_mask,
+            image_id.decode()
+        )
+        return (
+
+            batch
+
+        )
 
     def __iter__(self):
         print("madar begeryad")
@@ -434,7 +562,6 @@ class BertPreprocessBatch(object):
         self.bert_model = bert_model
 
     def __call__(self, data):
-        print("here1231231231312312312321312312312")
 
         # image_feature_wp, image_target_wp, image_location_wp, num_boxes, image_h, image_w, image_id, caption = (
         #     data
@@ -588,8 +715,8 @@ class BertPreprocessBatch(object):
 
             tokens_b.pop()
 
-
 # class DiscourseRelationClassification(Dataset):
+
 #     def __init__(
 #             self,
 #             task,
@@ -767,13 +894,14 @@ if __name__ == '__main__':
     bert_model = "bert-base-uncased"
     seq_len = 36
     data = DiscourseRelationDataset(
+        "",
         dataroot,
         tokenizer,
         bert_model,
         seq_len,
         encoding="utf-8",
         visual_target=0,
-        batch_size=3,
+        batch_size=1,
         shuffle=False,
         num_workers=25,
         cache=5000,
@@ -783,6 +911,25 @@ if __name__ == '__main__':
         visualization=False,
     )
 
-    for b in data:
-        print(b)
+    from torch.utils.data import DataLoader, Dataset, RandomSampler
+
+    train_sampler = RandomSampler(data)
+
+    loader = DataLoader(
+        data,
+        sampler=train_sampler,
+        batch_size=2,
+        num_workers=1,
+        pin_memory=True,
+    )
+
+    for b in loader:
+        print(b[-3])
+        print(b[-1])
+        print("*********************************************")
+        # print(b)
+
+
+    # for b in data:
+    #     print(b)
 

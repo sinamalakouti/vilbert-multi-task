@@ -157,7 +157,8 @@ def _load_dataset(dataroot, name, clean_datasets):
     return entries
 
 
-class VQAClassificationDataset(Dataset):
+class   VQAClassificationDataset(Dataset):
+
     def __init__(
         self,
         task,

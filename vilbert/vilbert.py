@@ -419,8 +419,6 @@ class BertSelfAttention(nn.Module):
             self.attention_head_size,
         )
         x = x.view(*new_x_shape)
-
-        print(x.shape)
         return x.permute(0, 2, 1, 3)
 
     def forward(self, hidden_states, attention_mask):
@@ -568,8 +566,6 @@ class BertImageSelfAttention(nn.Module):
             self.attention_head_size,
         )
         x = x.view(*new_x_shape)
-        print("2222")
-        print(x.shape)
         return x.permute(0, 2, 1, 3)
 
     def forward(self, hidden_states, attention_mask, txt_embedding, txt_attention_mask):
@@ -737,8 +733,6 @@ class BertBiAttention(nn.Module):
             self.attention_head_size,
         )
         x = x.view(*new_x_shape)
-        print("3333")
-        print(x.shape)
         return x.permute(0, 2, 1, 3)
 
     def forward(
@@ -1427,6 +1421,11 @@ class BertImageEmbeddings(nn.Module):
 
     def forward(self, input_ids, input_loc):
 
+        input_loc = input_loc.type(torch.DoubleTensor)
+        input_ids = input_ids.type(torch.DoubleTensor)
+        # print("h3errqew   ", input_loc.dtype)
+        # print("31414125151   ", input_ids.dtype)
+
         img_embeddings = self.image_embeddings(input_ids)
         loc_embeddings = self.image_location_embeddings(input_loc)
 
@@ -1614,7 +1613,7 @@ class VILBertForVLTasks(BertPreTrainedModel):
         self.cls = BertPreTrainingHeads(
             config, self.bert.embeddings.word_embeddings.weight
         )
-        self.discourse_prediction = Discourse_classifier(config.bi_hidden_size, config.bi_hidden_size * 2, 5, 0.5)
+        self.discourse_prediction = Discourse_classifier(config.bi_hidden_size, config.bi_hidden_size * 2, num_labels, 0.5)
         self.vil_prediction = SimpleClassifier(
             config.bi_hidden_size, config.bi_hidden_size * 2, 3129, 0.5
         )

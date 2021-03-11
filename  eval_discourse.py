@@ -39,12 +39,12 @@ from vilbert.task_utils import (
     ForwardModelsTrain,
     ForwardModelsVal,
 )
-from torch.optim.lr_scheduler import (
-    LambdaLR,
-    ReduceLROnPlateau,
-    CosineAnnealingLR,
-    CosineAnnealingWarmRestarts,
-)
+# from torch.optim.lr_scheduler import (
+#     LambdaLR,
+#     ReduceLROnPlateau,
+#     CosineAnnealingLR,
+#     CosineAnnealingWarmRestarts,
+# )
 
 import vilbert.utils as utils
 import torch.distributed as dist
@@ -333,6 +333,19 @@ def main():
         objective=0,
         visualization=False,
     )
+    from torch.utils.data import DataLoader, Dataset, RandomSampler
+
+    train_sampler = RandomSampler(train_dataset)
+
+    train_loader = DataLoader(
+        train_dataset,
+        sampler=train_sampler,
+        batch_size=2,
+        num_workers=0,
+        pin_memory=True,
+    )
+    # for i in train_loader:
+    #     print("hello")
     #todo task_ids , task_num_tiers
     task_ids = ['TASK0']
     task_num_iters = [100]
@@ -573,10 +586,12 @@ def main():
 
     for epochId in range(int(start_epoch), int(args.num_train_epochs)):
         model.train()
-        for step, batch in enumerate(train_dataset):
-            is_forward = True
+        is_forward = True
 
-            if is_forward:
+        if is_forward:
+            # print("beforeLoop")
+
+
                 # loss, score = ForwardModelsTrain(
                 #     args,
                 #     task_cfg,
@@ -589,142 +604,144 @@ def main():
                 #     task_losses,
                 # )
 
-                for step, batch in enumerate(train_dataset):
-                    input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
-                    true_targets = []
-                    for id in image_id:
-                        true_targets.append(all_targets[id].values)
-                    true_targets = torch.from_numpy(np.array(true_targets))
-                    discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _\
-                        = model(
-                        input_ids,
-                        image_feat,
-                        image_loc,
-                        segment_ids,
-                        input_mask,
-                        image_mask
-                    )
-                    print("here")
-                    loss = criterion(discourse_prediction, true_targets.type(torch.float))
-                    loss.backward()
-                    optimizer.step()
-                    model.zero_grad()
+            for step, batch in enumerate(train_loader):
+                input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
+                true_targets = []
+                for id in image_id:
+                    true_targets.append(np.fromiter(all_targets[id].values(), dtype = np.double))
+                true_targets = torch.from_numpy(np.array(true_targets))
+                model.double()
+                discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _\
+                    = model(
+                    input_ids,
+                    image_feat,
+                    image_loc,
+                    segment_ids,
+                    input_mask,
+                    image_mask
+                )
+                loss = criterion(discourse_prediction, true_targets.type(torch.double))
+                loss.backward()
+                optimizer.step()
+                model.zero_grad()
+            #
+            print(loss)
+            print(compute_score(discourse_prediction, true_targets.type(torch.float), 0.5))
+            # if default_gpu:
+            #     tbLogger.step_train(
+            #         epochId,
+            #         0,
+            #         float(loss),
+            #         compute_score(discourse_prediction, true_targets.type(torch.float), 0.5),
+            #         0.0004,
+            #         task_id,
+            #         "train",
+            #         )
 
-                if default_gpu:
-                    tbLogger.step_train(
-                        epochId,
-                        0,
-                        float(loss),
-                        compute_score(discourse_prediction, true_targets.type(torch.float), 0.5),
-                        optimizer.param_groups[0]["lr"],
-                        task_id,
-                        "train",
-                        )
+        # if "cosine" in args.lr_scheduler and global_step > warmpu_steps:
+        #     lr_scheduler.step()
 
-            # if "cosine" in args.lr_scheduler and global_step > warmpu_steps:
-            #     lr_scheduler.step()
-
-            # if (
-            #     step % (20 * args.gradient_accumulation_steps) == 0
-            #     and step != 0
-            #     and default_gpu
-            # ):
-            #     tbLogger.showLossTrain()
-
-
-
-
-    #
-    #         # decided whether to evaluate on each tasks.
-    #         for task_id in task_ids:
-    #             if (iterId != 0 and iterId % task_num_iters[task_id] == 0) or (
-    #                 epochId == args.num_train_epochs - 1 and step == median_num_iter - 1
-    #             ):
-    #                 evaluate(
-    #                     args,
-    #                     task_dataloader_val,
-    #                     task_stop_controller,
-    #                     task_cfg,
-    #                     device,
-    #                     task_id,
-    #                     model,
-    #                     task_losses,
-    #                     epochId,
-    #                     default_gpu,
-    #                     tbLogger,
-    #                 )
-    #
-    #     if args.lr_scheduler == "automatic":
-    #         lr_scheduler.step(sum(val_scores.values()))
-    #         logger.info("best average score is %3f" % lr_scheduler.best)
-    #     elif args.lr_scheduler == "mannul":
-    #         lr_scheduler.step()
-    #
-    #     if epochId in lr_reduce_list:
-    #         for task_id in task_ids:
-    #             # reset the task_stop_controller once the lr drop
-    #             task_stop_controller[task_id]._reset()
-    #
-    #     if default_gpu:
-    #         # Save a trained model
-    #         logger.info("** ** * Saving fine - tuned model ** ** * ")
-    #         model_to_save = (
-    #             model.module if hasattr(model, "module") else model
-    #         )  # Only save the model it-self
-    #         output_model_file = os.path.join(
-    #             savePath, "pytorch_model_" + str(epochId) + ".bin"
-    #         )
-    #         output_checkpoint = os.path.join(savePath, "pytorch_ckpt_latest.tar")
-    #         torch.save(model_to_save.state_dict(), output_model_file)
-    #         torch.save(
-    #             {
-    #                 "model_state_dict": model_to_save.state_dict(),
-    #                 "optimizer_state_dict": optimizer.state_dict(),
-    #                 "warmup_scheduler_state_dict": warmup_scheduler.state_dict(),
-    #                 # 'lr_scheduler_state_dict': lr_scheduler.state_dict(),
-    #                 "global_step": global_step,
-    #                 "epoch_id": epochId,
-    #                 "task_stop_controller": task_stop_controller,
-    #                 "tb_logger": tbLogger,
-    #             },
-    #             output_checkpoint,
-    #         )
-    # tbLogger.txt_close()
-
-
-def evaluate(
-    args,
-    task_dataloader_val,
-    task_stop_controller,
-    task_cfg,
-    device,
-    task_id,
-    model,
-    task_losses,
-    epochId,
-    default_gpu,
-    tbLogger,
-):
-
-    model.eval()
-    for i, batch in enumerate(task_dataloader_val[task_id]):
-        loss, score, batch_size = ForwardModelsVal(
-            args, task_cfg, device, task_id, batch, model, task_losses
-        )
-        tbLogger.step_val(
-            epochId, float(loss), float(score), task_id, batch_size, "val"
-        )
-        if default_gpu:
-            sys.stdout.write("%d/%d\r" % (i, len(task_dataloader_val[task_id])))
-            sys.stdout.flush()
-
-    # update the multi-task scheduler.
-    task_stop_controller[task_id].step(tbLogger.getValScore(task_id))
-    score = tbLogger.showLossVal(task_id, task_stop_controller)
-    model.train()
+        # if (
+        #     step % (20 * args.gradient_accumulation_steps) == 0
+        #     and step != 0
+        #     and default_gpu
+        # ):
+        #     tbLogger.showLossTrain()
 
 
 
+
+#
+#         # decided whether to evaluate on each tasks.
+#         for task_id in task_ids:
+#             if (iterId != 0 and iterId % task_num_iters[task_id] == 0) or (
+#                 epochId == args.num_train_epochs - 1 and step == median_num_iter - 1
+#             ):
+#                 evaluate(
+#                     args,
+#                     task_dataloader_val,
+#                     task_stop_controller,
+#                     task_cfg,
+#                     device,
+#                     task_id,
+#                     model,
+#                     task_losses,
+#                     epochId,
+#                     default_gpu,
+#                     tbLogger,
+#                 )
+#
+#     if args.lr_scheduler == "automatic":
+#         lr_scheduler.step(sum(val_scores.values()))
+#         logger.info("best average score is %3f" % lr_scheduler.best)
+#     elif args.lr_scheduler == "mannul":
+#         lr_scheduler.step()
+#
+#     if epochId in lr_reduce_list:
+#         for task_id in task_ids:
+#             # reset the task_stop_controller once the lr drop
+#             task_stop_controller[task_id]._reset()
+#
+#     if default_gpu:
+#         # Save a trained model
+#         logger.info("** ** * Saving fine - tuned model ** ** * ")
+#         model_to_save = (
+#             model.module if hasattr(model, "module") else model
+#         )  # Only save the model it-self
+#         output_model_file = os.path.join(
+#             savePath, "pytorch_model_" + str(epochId) + ".bin"
+#         )
+#         output_checkpoint = os.path.join(savePath, "pytorch_ckpt_latest.tar")
+#         torch.save(model_to_save.state_dict(), output_model_file)
+#         torch.save(
+#             {
+#                 "model_state_dict": model_to_save.state_dict(),
+#                 "optimizer_state_dict": optimizer.state_dict(),
+#                 "warmup_scheduler_state_dict": warmup_scheduler.state_dict(),
+#                 # 'lr_scheduler_state_dict': lr_scheduler.state_dict(),
+#                 "global_step": global_step,
+#                 "epoch_id": epochId,
+#                 "task_stop_controller": task_stop_controller,
+#                 "tb_logger": tbLogger,
+#             },
+#             output_checkpoint,
+#         )
+# tbLogger.txt_close()
+
+#
+# def evaluate(
+#     args,
+#     task_dataloader_val,
+#     task_stop_controller,
+#     task_cfg,
+#     device,
+#     task_id,
+#     model,
+#     task_losses,
+#     epochId,
+#     default_gpu,
+#     tbLogger,
+# ):
+#
+#     model.eval()
+#     for i, batch in enumerate(task_dataloader_val[task_id]):
+#         loss, score, batch_size = ForwardModelsVal(
+#             args, task_cfg, device, task_id, batch, model, task_losses
+#         )
+#         tbLogger.step_val(
+#             epochId, float(loss), float(score), task_id, batch_size, "val"
+#         )
+#         if default_gpu:
+#             sys.stdout.write("%d/%d\r" % (i, len(task_dataloader_val[task_id])))
+#             sys.stdout.flush()
+#
+#     # update the multi-task scheduler.ls
+#     task_stop_controller[task_id].step(tbLogger.getValScore(task_id))
+#     score = tbLogger.showLossVal(task_id, task_stop_controller)
+#     model.train()
+#
+#
+#
 
 def compute_score(pred, target, threshold=0.5):
 

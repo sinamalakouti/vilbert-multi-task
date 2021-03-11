@@ -117,7 +117,7 @@ def download_images(images_url, dir_url, output_path, train_test):
                 print(response)
                 print(all_captions[ind])
                 print("[INFO] error downloading {}...skipping".format(ind))
-        
+
     with open( dir_url + 'captions_all_json.json', 'w') as outfile:
         json.dump(captions, outfile)
 
@@ -311,5 +311,7 @@ if __name__ == '__main__':
     # print(cap.shape)
     # print(images.shape)
     # print(images)
-    images = np.load("../data/discoursedata/train/all_images.npy").ravel()
-    download_images(images,"../data/discoursedata/train/", "../data/discoursedata/train/images",'train')
+    print("ji")
+    print(os.path.abspath("./data/discoursedata/train/all_images.npy"))
+    images = np.load("./data/discoursedata/train/all_images.npy").ravel()
+    download_images(images,"./data/discoursedata/train/", "./data/discoursedata/train/images",'train')

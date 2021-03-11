@@ -39,7 +39,7 @@ class ImageFeaturesH5Reader(object):
         RAM - trade-off between speed and memory.
     """
 
-    def __init__(self, features_path: str, in_memory: bool = False):
+    def     __init__(self, features_path: str, in_memory: bool = False):
         self.features_path = features_path
         self._in_memory = in_memory
 
@@ -68,9 +68,10 @@ class ImageFeaturesH5Reader(object):
         return len(self._image_ids)
 
     def __getitem__(self, image_id):
-        if image_id >= len(self.features):
-            raise  IndexError
-        image_id = str("pic" + str(image_id)).encode()
+        # if image_id >= len(self.features):
+        #     raise  IndexError
+        # image_id = str("pic" + str(image_id)).encode()
+        # print(self._image_ids)
         index = self._image_ids.index(image_id)
         if self._in_memory:
             # Load features during first epoch, all not loaded together as it

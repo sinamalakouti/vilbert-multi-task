@@ -25,7 +25,7 @@ class Prepare_files():
         all_data = []
         for f in listdir(dir_path):
             file_name = f
-            file_path = os.path.abspath(f)
+            file_path = os.path.join(dir_path, f)
             data = np.load(file_path, allow_pickle=True)
             data = data.ravel()
             temp = data[0]
@@ -33,7 +33,7 @@ class Prepare_files():
             temp['file_path'] = file_path
             all_data.append(temp)
             np.save(file_path, data)
-        np.save(dir_path +"/all_data.npym", all_data)
+        np.save(dir_path +"/all_data.npy", all_data)
 
 
 if __name__ == '__main__':
