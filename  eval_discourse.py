@@ -583,6 +583,7 @@ def main():
     criterion = nn.BCELoss()
     target_path = os.path.join(task_cfg[task]["dataroot"], "all_targets_json.json")
     all_targets =  json.load(open(target_path, "r"))
+    model.cuda(device)
 
     for epochId in range(int(start_epoch), int(args.num_train_epochs)):
         model.train()
