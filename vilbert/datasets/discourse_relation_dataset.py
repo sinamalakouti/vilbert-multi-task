@@ -473,7 +473,7 @@ class DiscourseRelationDataset(object):
             # image_target,
             # image_label,
             cur_features.image_mask,
-            torch.tensor(image_id.decode())
+            image_id.decode()
         )
         return (
 
