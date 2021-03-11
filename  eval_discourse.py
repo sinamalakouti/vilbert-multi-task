@@ -315,6 +315,9 @@ def main():
     tokenizer = BertTokenizer.from_pretrained(
         args.bert_model, do_lower_case=args.do_lower_case
     )
+    tokenizer.double()
+    tokenizer = tokenizer.to(device)
+
     labels = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant']
     train_dataset = DiscourseRelationDataset(
         labels,
@@ -432,7 +435,8 @@ def main():
             num_labels=num_labels,
             default_gpu=default_gpu,
         )
-
+    model.double()
+    model= model.to(device)
     task_losses = LoadLosses(args, task_cfg, args.tasks.split("-"))
 
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]

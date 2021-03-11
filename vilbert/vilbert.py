@@ -1421,8 +1421,8 @@ class BertImageEmbeddings(nn.Module):
 
     def forward(self, input_ids, input_loc):
 
-        input_loc = input_loc.type(torch.DoubleTensor)
-        input_ids = input_ids.type(torch.DoubleTensor)
+        # input_loc = input_loc.type(torch.DoubleTensor)
+        # input_ids = input_ids.type(torch.DoubleTensor)
         # print("h3errqew   ", input_loc.dtype)
         # print("31414125151   ", input_ids.dtype)
 
