@@ -566,7 +566,7 @@ def main():
     if default_gpu:
         print("***** Running training *****")
         print("  Num Iters: ", task_num_iters)
-        print("  Batch size: ", task_batch_size)
+        print("  Batch size: ", batch_size)
         print("  Num steps: %d" % num_train_optimization_steps)
 
     task_iter_train = {name: None for name in task_ids}
@@ -792,7 +792,10 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
         num_workers=0,
         pin_memory=True,
     )
-
+    avg_avg = 0
+    avg_sample = 0
+    avg_micro = 0
+    counter  = 0
     with torch.no_grad():
         for batch in test_loader:
             batch = tuple(t.to(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
@@ -818,7 +821,13 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
         # print(loss)
             discourse_prediction = discourse_prediction.to('cpu')
             true_targets = true_targets.to('cpu')
-            print(compute_score(discourse_prediction, true_targets.type(torch.float), 0.5))
+            res = compute_score(discourse_prediction, true_targets.type(torch.float), 0.5)
+            avg_avg += res['weighted/f1']
+            avg_micro += res['micro/f1']
+            avg_sample += res['samples/f1']
+            counter += 1
+
+        print("micro/f1 : {},   weighted/f1 : {},    samples/f1 : {}".format(avg_micro/counter, avg_avg / counter, avg_sample/counter))
     model.train()
 
 
