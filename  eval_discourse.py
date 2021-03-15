@@ -280,7 +280,6 @@ def main():
             "cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu"
         )
         n_gpu = torch.cuda.device_count()
-        n_gpu = 2
     else:
         torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
@@ -817,10 +816,10 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
             # loss = criterion(discourse_prediction, true_targets.type(torch.double))
             #
         # print(loss)
-        discourse_prediction = discourse_prediction.to('cpu')
-        true_targets = true_targets.to('cpu')
-        print(compute_score(discourse_prediction, true_targets.type(torch.float), 0.5))
-        model.train()
+            discourse_prediction = discourse_prediction.to('cpu')
+            true_targets = true_targets.to('cpu')
+            print(compute_score(discourse_prediction, true_targets.type(torch.float), 0.5))
+    model.train()
 
 
 def compute_score(pred, target, threshold=0.5):
