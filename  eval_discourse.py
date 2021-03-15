@@ -59,6 +59,8 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
+    batch_size = 64
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -327,9 +329,9 @@ def main():
         task_cfg[task]["max_seq_length"],
         encoding="utf-8",
         visual_target=0,
-        batch_size=512,
+        batch_size=batch_size,
         shuffle=False,
-        num_workers=25,
+        num_workers=4,
         cache=5000,
         drop_last=False,
         cuda=False,
@@ -342,7 +344,7 @@ def main():
     train_loader = DataLoader(
         train_dataset,
         sampler=train_sampler,
-        batch_size=128,
+        batch_size= batch_size,
         num_workers=0,
         pin_memory=True,
     )
@@ -759,7 +761,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
     model.eval()
     task = "TASK0"
     target_path = os.path.join(task_cfg[task]["test_dataroot"], "all_targets_json.json")
-
+    batch_size = 64
     test_dataset = DiscourseRelationDataset(
         labels,
         task_cfg[task]["test_dataroot"],
@@ -768,9 +770,9 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
         task_cfg[task]["max_seq_length"],
         encoding="utf-8",
         visual_target=0,
-        batch_size=512,
+        batch_size=64,
         shuffle=False,
-        num_workers=25,
+        num_workers=2,
         cache=5000,
         drop_last=False,
         cuda=False,
@@ -781,7 +783,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
     all_targets = json.load(open(target_path, "r"))
 
     # todo batchsize equal to the qhole dataset
-    batch_size = test_dataset.num_dataset
+    # batch_size = test_dataset.num_dataset
     test_sampler = RandomSampler(test_dataset)
 
     test_loader = DataLoader(

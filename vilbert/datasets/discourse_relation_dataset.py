@@ -351,7 +351,7 @@ class DiscourseRelationDataset(object):
             visualization=visualization,
             objective=objective,
         )
-        self.ds = td.MapData(ds, preprocess_function)
+        # self.ds = td.MapData(ds, preprocess_function)
         self.tokenizer = tokenizer
         # self.ds = td.BatchData(ds, batch_size, remainder=True)
         print("man ye kharama ")
@@ -481,57 +481,57 @@ class DiscourseRelationDataset(object):
 
         )
 
-    def __iter__(self):
-        print("madar begeryad")
-        for batch in self.ds.get_data():
-            # input_ids, input_mask, segment_ids, lm_label_ids, is_next, image_feat, image_loc, image_target, image_label, image_mask, masked_label, image_id = (
-            #     batch
-            # )
-
-            # input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (
-            #     batch
-            # )
-
-            input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id  = (batch)
-
-
-            batch_size = input_ids.shape[0]
-            # sum_count = np.sum(masked_label == 0, axis=1, keepdims=True)
-            # sum_count[sum_count == 0] = 1
-            # g_image_feat = np.sum(image_feat, axis=1) / sum_count
-            # image_feat = np.concatenate(
-            #     [np.expand_dims(g_image_feat, axis=1), image_feat], axis=1
-            # )
-            image_feat = np.array(image_feat, dtype=np.float32)
-
-            # g_image_loc = np.repeat(
-            #     np.array([[0, 0, 1, 1, 1]], dtype=np.float32), batch_size, axis=0
-            # )
-            # image_loc = np.concatenate(
-            #     [np.expand_dims(g_image_loc, axis=1), image_loc], axis=1
-            # )
-
-            image_loc = np.array(image_loc, dtype=np.float32)
-            # g_image_mask = np.repeat(np.array([[1]]), batch_size, axis=0)
-            # image_mask = np.concatenate([g_image_mask, image_mask], axis=1)
-
-            batch = (
-                input_ids,
-                input_mask,
-                segment_ids,
-                # lm_label_ids,
-                # is_next,
-                image_feat,
-                image_loc,
-                # image_target,
-                # image_label,
-                image_mask,
-            )
-
-            yield tuple([torch.tensor(data) for data in batch] + [image_id])
+    # def __iter__(self):
+    #     print("madar begeryad")
+    #     for batch in self.ds.get_data():
+    #         # input_ids, input_mask, segment_ids, lm_label_ids, is_next, image_feat, image_loc, image_target, image_label, image_mask, masked_label, image_id = (
+    #         #     batch
+    #         # )
+    #
+    #         # input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (
+    #         #     batch
+    #         # )
+    #
+    #         input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id  = (batch)
+    #
+    #
+    #         batch_size = input_ids.shape[0]
+    #         # sum_count = np.sum(masked_label == 0, axis=1, keepdims=True)
+    #         # sum_count[sum_count == 0] = 1
+    #         # g_image_feat = np.sum(image_feat, axis=1) / sum_count
+    #         # image_feat = np.concatenate(
+    #         #     [np.expand_dims(g_image_feat, axis=1), image_feat], axis=1
+    #         # )
+    #         image_feat = np.array(image_feat, dtype=np.float32)
+    #
+    #         # g_image_loc = np.repeat(
+    #         #     np.array([[0, 0, 1, 1, 1]], dtype=np.float32), batch_size, axis=0
+    #         # )
+    #         # image_loc = np.concatenate(
+    #         #     [np.expand_dims(g_image_loc, axis=1), image_loc], axis=1
+    #         # )
+    #
+    #         image_loc = np.array(image_loc, dtype=np.float32)
+    #         # g_image_mask = np.repeat(np.array([[1]]), batch_size, axis=0)
+    #         # image_mask = np.concatenate([g_image_mask, image_mask], axis=1)
+    #
+    #         batch = (
+    #             input_ids,
+    #             input_mask,
+    #             segment_ids,
+    #             # lm_label_ids,
+    #             # is_next,
+    #             image_feat,
+    #             image_loc,
+    #             # image_target,
+    #             # image_label,
+    #             image_mask,
+    #         )
+    #
+    #         yield tuple([torch.tensor(data) for data in batch] + [image_id])
 
     def __len__(self):
-        return self.ds.size()
+        return len(self.image_reader)
 
 
 class BertPreprocessBatch(object):
