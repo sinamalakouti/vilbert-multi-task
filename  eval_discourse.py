@@ -837,7 +837,7 @@ def compute_score(pred, target, threshold=0.5):
 
         # 'macro/recall': recall_score(y_true=target, y_pred=pred, average='macro'),
 
-        'macro/f1': f1_score(y_true=target, y_pred=pred, average='macro'),
+        'weighted/f1': f1_score(y_true=target, y_pred=pred, average='weighted'),
 
         # 'samples/precision': precision_score(y_true=target, y_pred=pred, average='samples'),
 
