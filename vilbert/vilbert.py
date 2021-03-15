@@ -1420,9 +1420,12 @@ class BertImageEmbeddings(nn.Module):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, input_ids, input_loc):
-
-        # input_loc = input_loc.type(torch.DoubleTensor)
-        # input_ids = input_ids.type(torch.DoubleTensor)
+        dev_input = input_ids.device
+        dev_loc = input_loc.device
+        input_loc = input_loc.type(torch.DoubleTensor)
+        input_ids = input_ids.type(torch.DoubleTensor)
+        input_loc = input_loc.to(dev_loc)
+        input_ids = input_ids.to(dev_input)
         # print("h3errqew   ", input_loc.dtype)
         # print("31414125151   ", input_ids.dtype)
 

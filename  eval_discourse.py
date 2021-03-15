@@ -25,6 +25,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 from vilbert.datasets.discourse_relation_dataset import DiscourseRelationDataset
 from pytorch_transformers.tokenization_bert import BertTokenizer
+from torch.utils.data import DataLoader, Dataset, RandomSampler
 
 from pytorch_transformers.optimization import (
     AdamW,
@@ -65,14 +66,14 @@ def main():
         default="bert-base-uncased",
         type=str,
         help="Bert pre-trained model selected in the list: bert-base-uncased, "
-        "bert-large-uncased, bert-base-cased, bert-base-multilingual, bert-base-chinese.",
+             "bert-large-uncased, bert-base-cased, bert-base-multilingual, bert-base-chinese.",
     )
     parser.add_argument(
         "--from_pretrained",
         default="bert-base-uncased",
         type=str,
         help="Bert pre-trained model selected in the list: bert-base-uncased, "
-        "bert-large-uncased, bert-base-cased, bert-base-multilingual, bert-base-chinese.",
+             "bert-large-uncased, bert-base-cased, bert-base-multilingual, bert-base-chinese.",
     )
     parser.add_argument(
         "--output_dir",
@@ -109,7 +110,7 @@ def main():
         default=0.1,
         type=float,
         help="Proportion of training to perform linear learning rate warmup for. "
-        "E.g., 0.1 = 10%% of training.",
+             "E.g., 0.1 = 10%% of training.",
     )
     parser.add_argument(
         "--no_cuda", action="store_true", help="Whether not to use CUDA when available"
@@ -145,8 +146,8 @@ def main():
         type=float,
         default=0,
         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
-        "0 (default value): dynamic loss scaling.\n"
-        "Positive power of 2: static loss scaling value.\n",
+             "0 (default value): dynamic loss scaling.\n"
+             "Positive power of 2: static loss scaling value.\n",
     )
     parser.add_argument(
         "--num_workers",
@@ -222,7 +223,7 @@ def main():
         help="whether to use task specific tokens for the multi-task learning.",
     )
 
-#todo
+    # todo
     args = parser.parse_args()
     with open("vilbert_tasks.yml", "r") as f:
         task_cfg = edict(yaml.safe_load(f))
@@ -261,10 +262,10 @@ def main():
     else:
         prefix = ""
     timeStamp = (
-        "-".join("discourse")
-        + "_"
-        + args.config_file.split("/")[1].split(".")[0]
-        + prefix
+            "-".join("discourse")
+            + "_"
+            + args.config_file.split("/")[1].split(".")[0]
+            + prefix
     )
     savePath = os.path.join(args.output_dir, timeStamp)
 
@@ -277,6 +278,7 @@ def main():
             "cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu"
         )
         n_gpu = torch.cuda.device_count()
+        n_gpu = 2
     else:
         torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
@@ -315,8 +317,6 @@ def main():
     tokenizer = BertTokenizer.from_pretrained(
         args.bert_model, do_lower_case=args.do_lower_case
     )
-    tokenizer.double()
-    tokenizer = tokenizer.to(device)
 
     labels = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant']
     train_dataset = DiscourseRelationDataset(
@@ -336,25 +336,25 @@ def main():
         objective=0,
         visualization=False,
     )
-    from torch.utils.data import DataLoader, Dataset, RandomSampler
 
     train_sampler = RandomSampler(train_dataset)
 
     train_loader = DataLoader(
         train_dataset,
         sampler=train_sampler,
-        batch_size=2,
+        batch_size=128,
         num_workers=0,
         pin_memory=True,
     )
     # for i in train_loader:
     #     print("hello")
-    #todo task_ids , task_num_tiers
+    # todo task_ids , task_num_tiers
     task_ids = ['TASK0']
     task_num_iters = [100]
     task_batch_size = task_cfg['TASK0']["batch_size"]
 
-
+    print("task_batch_size")
+    print(task_batch_size)
     logdir = os.path.join(savePath, "logs")
     tbLogger = utils.tbLogger(
         logdir,
@@ -436,7 +436,7 @@ def main():
             default_gpu=default_gpu,
         )
     model.double()
-    model= model.to(device)
+    model = model.to(device)
     task_losses = LoadLosses(args, task_cfg, args.tasks.split("-"))
 
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
@@ -586,8 +586,8 @@ def main():
     # args.num_train_epochs
     criterion = nn.BCELoss()
     target_path = os.path.join(task_cfg[task]["dataroot"], "all_targets_json.json")
-    all_targets =  json.load(open(target_path, "r"))
-    model.cuda(device)
+    all_targets = json.load(open(target_path, "r"))
+    model = model.to(device)
     print(next(model.parameters()).is_cuda)
     for epochId in range(int(start_epoch), int(args.num_train_epochs)):
         model.train()
@@ -596,34 +596,29 @@ def main():
         if is_forward:
             # print("beforeLoop")
 
-
-                # loss, score = ForwardModelsTrain(
-                #     args,
-                #     task_cfg,
-                #     device,
-                #     task_id,
-                #     task_count,
-                #     task_iter_train,
-                #     train_dataset,
-                #     model,
-                #     task_losses,
-                # )
+            # loss, score = ForwardModelsTrain(
+            #     args,
+            #     task_cfg,
+            #     device,
+            #     task_id,
+            #     task_count,
+            #     task_iter_train,
+            #     train_dataset,
+            #     model,
+            #     task_losses,
+            # )
 
             for step, batch in enumerate(train_loader):
-                batch = tuple( t.cuda(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
-                print( "check device")
-                for b in batch:
-                    if type(b) == torch.Tensor:
-                        print(b.device)
+                batch = tuple(t.to(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
                 input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
                 true_targets = []
                 for id in image_id:
-                    true_targets.append(np.fromiter(all_targets[id].values(), dtype = np.double))
+                    true_targets.append(np.fromiter(all_targets[id].values(), dtype=np.double))
                 true_targets = torch.from_numpy(np.array(true_targets))
                 true_targets = true_targets.to(device)
                 model.double()
                 model = model.to(device)
-                discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _\
+                discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
                     = model(
                     input_ids,
                     image_feat,
@@ -636,9 +631,15 @@ def main():
                 loss.backward()
                 optimizer.step()
                 model.zero_grad()
+                print("train train train done")
             #
+
+            print("*********** ITERATION {}  ***********".format(epochId))
+            print("*********** TRAIN PERFORMANCE ***********")
             print(loss)
-            print(compute_score(discourse_prediction, true_targets.type(torch.float), 0.5))
+            print(compute_score(discourse_prediction.to('cpu'), true_targets.type(torch.float).to('cpu'), 0.5))
+            print("*********** TEST PERFORMANCE ***********")
+            evaluate(model, device, task_cfg, tokenizer, args, labels)
             # if default_gpu:
             #     tbLogger.step_train(
             #         epochId,
@@ -659,8 +660,6 @@ def main():
         #     and default_gpu
         # ):
         #     tbLogger.showLossTrain()
-
-
 
 
 #
@@ -755,34 +754,98 @@ def main():
 #
 #
 
-def compute_score(pred, target, threshold=0.5):
 
+def evaluate(model, device, task_cfg, tokenizer, args, labels):
+    model.eval()
+    task = "TASK0"
+    target_path = os.path.join(task_cfg[task]["test_dataroot"], "all_targets_json.json")
+
+    test_dataset = DiscourseRelationDataset(
+        labels,
+        task_cfg[task]["test_dataroot"],
+        tokenizer,
+        args.bert_model,
+        task_cfg[task]["max_seq_length"],
+        encoding="utf-8",
+        visual_target=0,
+        batch_size=512,
+        shuffle=False,
+        num_workers=25,
+        cache=5000,
+        drop_last=False,
+        cuda=False,
+        objective=0,
+        visualization=False,
+    )
+
+    all_targets = json.load(open(target_path, "r"))
+
+    # todo batchsize equal to the qhole dataset
+    batch_size = test_dataset.num_dataset
+    test_sampler = RandomSampler(test_dataset)
+
+    test_loader = DataLoader(
+        test_dataset,
+        sampler=test_sampler,
+        batch_size=batch_size,
+        num_workers=0,
+        pin_memory=True,
+    )
+
+    with torch.no_grad():
+        for batch in test_loader:
+            batch = tuple(t.to(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
+            input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
+            true_targets = []
+            for id in image_id:
+                true_targets.append(np.fromiter(all_targets[id].values(), dtype=np.double))
+            true_targets = torch.from_numpy(np.array(true_targets))
+            true_targets = true_targets.to(device)
+            model.double()
+            model = model.to(device)
+            discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                = model(
+                input_ids,
+                image_feat,
+                image_loc,
+                segment_ids,
+                input_mask,
+                image_mask
+            )
+            # loss = criterion(discourse_prediction, true_targets.type(torch.double))
+            #
+        # print(loss)
+        discourse_prediction = discourse_prediction.to('cpu')
+        true_targets = true_targets.to('cpu')
+        print(compute_score(discourse_prediction, true_targets.type(torch.float), 0.5))
+        model.train()
+
+
+def compute_score(pred, target, threshold=0.5):
     pred = np.array(pred > threshold, dtype=float)
     from sklearn.metrics import precision_score, f1_score
 
     return {
-           # 'micro/precision': precision_score(y_true=target, y_pred=pred, average='micro'),
+        # 'micro/precision': precision_score(y_true=target, y_pred=pred, average='micro'),
 
-            # 'micro/recall': recall_score(y_true=target, y_pred=pred, average='micro'),
+        # 'micro/recall': recall_score(y_true=target, y_pred=pred, average='micro'),
 
-            'micro/f1': f1_score(y_true=target, y_pred=pred, average='micro'),
+        'micro/f1': f1_score(y_true=target, y_pred=pred, average='micro'),
 
-            # 'macro/precision': precision_score(y_true=target, y_pred=pred, average='macro'),
+        # 'macro/precision': precision_score(y_true=target, y_pred=pred, average='macro'),
 
-            # 'macro/recall': recall_score(y_true=target, y_pred=pred, average='macro'),
+        # 'macro/recall': recall_score(y_true=target, y_pred=pred, average='macro'),
 
-            'macro/f1': f1_score(y_true=target, y_pred=pred, average='macro'),
+        'macro/f1': f1_score(y_true=target, y_pred=pred, average='macro'),
 
-            # 'samples/precision': precision_score(y_true=target, y_pred=pred, average='samples'),
+        # 'samples/precision': precision_score(y_true=target, y_pred=pred, average='samples'),
 
-            # 'samples/recall': recall_score(y_true=target, y_pred=pred, average='samples'),
+        # 'samples/recall': recall_score(y_true=target, y_pred=pred, average='samples'),
 
-            'samples/f1': f1_score(y_true=target, y_pred=pred, average='samples'),
+        'samples/f1': f1_score(y_true=target, y_pred=pred, average='samples'),
 
-            }
-
+    }
 
 
 if __name__ == "__main__":
-
     main()
