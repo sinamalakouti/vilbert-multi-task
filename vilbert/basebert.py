@@ -774,7 +774,7 @@ class BertModel(BertPreTrainedModel):
         return encoded_layers, pooled_output
 
 
-class BertForMultiModalPreTraining(BertPreTrainedModel):
+class   BertForMultiModalPreTraining(BertPreTrainedModel):
     """BERT model with multi modal pre-training heads.
     This module comprises the BERT model followed by the two pre-training heads:
         - the masked multi modal modeling head, and
@@ -788,7 +788,7 @@ class BertForMultiModalPreTraining(BertPreTrainedModel):
             with the word token indices in the vocabulary(see the tokens preprocessing logic in the scripts
             `extract_features.py`, `run_classifier.py` and `run_squad.py`)
         `token_type_ids`: an optional torch.LongTensor of shape [batch_size, sequence_length] with the token
-            types indices selected in [0, 1]. Type 0 corresponds to a `sentence A` and type 1 corresponds to
+                types indices selected in [0, 1]. Type 0 correspond  to a `sentence A` and type 1 corresponds to
             a `sentence B` token (see BERT paper for more details).
         `attention_mask`: an optional torch.LongTensor of shape [batch_size, sequence_length] with indices
             selected in [0, 1]. It's a mask to be used if the input sequence length is smaller than the max
@@ -917,7 +917,7 @@ class BaseBertForVLTasks(BertPreTrainedModel):
         attention_mask=None,
         image_attention_mask=None,
         co_attention_mask=None,
-        output_all_encoded_layers=False,
+        output_all_encoded_layers=False
     ):
         sequence_output, pooled_output = self.bert(
             input_txt,

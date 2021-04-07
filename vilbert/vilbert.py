@@ -1647,6 +1647,7 @@ class VILBertForVLTasks(BertPreTrainedModel):
 
     def forward(
         self,
+        is_supervised,
         input_txt,
         input_imgs,
         image_loc,
@@ -1691,6 +1692,12 @@ class VILBertForVLTasks(BertPreTrainedModel):
             pooled_output = self.dropout(pooled_output_t * pooled_output_v)
         else:
             assert False
+        if not is_supervised:
+            from torch.distributions.uniform import Uniform
+            self.uni_dist = Uniform(-0.3, 0.3)
+            noise_vector = self.uni_dist.sample(pooled_output.shape[1:]).to(pooled_output.device).unsqueeze(0)
+            pooled_output = pooled_output.mul(noise_vector) + pooled_output
+
         discourse_prediction = self.discourse_prediction(pooled_output)
 
         vil_prediction = self.vil_prediction(pooled_output)
@@ -1730,7 +1737,7 @@ class Discourse_classifier(nn.Module):
             GeLU(),
             BertLayerNorm(hid_dim, eps=1e-12),
             nn.Linear(hid_dim, out_dim),
-            nn.Sigmoid()
+            # nn.Sigmoid()
         )
 
     def forward(self, hidden_states):

@@ -79,7 +79,7 @@ def image_found(ind, pic_url):
 
 def download_images(images_url, dir_url, output_path, train_test):
 
-    labels_headers = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant']
+    labels_headers = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant', 'Other']
     all_captions = np.load(dir_url + "all_captions.npy", allow_pickle=True)
     # all_captions = np.load(dir_url + "all_captions_{}.npy".format(train_test), allow_pickle=True)
     all_captions = all_captions.ravel()
@@ -125,6 +125,17 @@ def download_images(images_url, dir_url, output_path, train_test):
         json.dump(targets, outfile)
 
 
+def convert_target_json(target_json_file, main_annotation_csv, ):
+    target_json = json.load(open(target_json_file,'r'))
+    target_main = pd.read_csv(main_annotation_csv, index_col = 0)
+
+    for image_id in target_json:
+        id = image_id[3:]
+        id = int (id)
+        target_json[image_id]['Other'] = target_main['Other'][id]
+
+    with open( 'all_targets_json.json', 'w') as outfile:
+        json.dump(target_json, outfile)
 def LoadDatasets(args, task_cfg, ids, split="trainval"):
     tokenizer = BertTokenizer.from_pretrained(
         "bert-base-uncased", do_lower_case=True

@@ -4,7 +4,7 @@ TASK0:
   loss: BCEWithLogitLoss
   process: normal
   task_id: 0
-  dataroot: /Users/sinamalakouti/PycharmProjects/vilbert-multi-task/data/discoursedata/test/
+  dataroot: /Users/sinamalakouti/PycharmProjects/vilbert-multi-task/data/discoursedata/
   test_dataroot:  '/Users/sinamalakouti/PycharmProjects/vilbert-multi-task/data/discoursedata'
   features_h5path1: '/Users/sinamalakouti/PycharmProjects/vilbert-multi-task/data/discoursedata'
   features_h5path2: ''

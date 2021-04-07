@@ -339,18 +339,18 @@ class DiscourseRelationDataset(object):
         self.image_name = self.image_reader.keys()
         # ds = td.LMDBSerializer.load(lmdb_file, shuffle=False)
         self.num_dataset = len(ds)
-        preprocess_function = BertPreprocessBatch(
-            caption_path,
-            tokenizer,
-            bert_model,
-            seq_len,
-            101,
-            self.num_dataset,
-            encoding="utf-8",
-            visual_target=visual_target,
-            visualization=visualization,
-            objective=objective,
-        )
+        # preprocess_function = BertPreprocessBatch(
+        #     caption_path,
+        #     tokenizer,
+        #     bert_model,
+        #     seq_len,
+        #     101,
+        #     self.num_dataset,
+        #     encoding="utf-8",
+        #     visual_target=visual_target,
+        #     visualization=visualization,
+        #     objective=objective,
+        # )
         # self.ds = td.MapData(ds, preprocess_function)
         self.tokenizer = tokenizer
         # self.ds = td.BatchData(ds, batch_size, remainder=True)

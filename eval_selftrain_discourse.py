@@ -319,7 +319,7 @@ def main():
         args.bert_model, do_lower_case=args.do_lower_case
     )
 
-    labels = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant']
+    labels = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant', 'Other']
     train_dataset = DiscourseRelationDataset(
         labels,
         task_cfg[task]["dataroot"],
@@ -380,41 +380,6 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    task_ave_iter = {}
-    task_stop_controller = {}
-    # for task_id, num_iter in task_num_iters.items():
-    #     task_ave_iter[task_id] = int(
-    #         task_cfg[task]["num_epoch"]
-    #         * num_iter
-    #         * args.train_iter_multiplier
-    #         / args.num_train_epochs
-    #     )
-    #     task_stop_controller[task_id] = utils.MultiTaskStopOnPlateau(
-    #         mode="max",
-    #         patience=1,
-    #         continue_threshold=0.005,
-    #         cooldown=1,
-    #         threshold=0.001,
-    #     )
-
-    # task_ave_iter_list = sorted(task_ave_iter.values())
-    # median_num_iter = task_ave_iter_list[-1]
-    # num_train_optimization_steps = (
-    #     median_num_iter * args.num_train_epochs // args.gradient_accumulation_steps
-    # )
-    # num_labels = max([dataset.num_labels for dataset in task_datasets_train.values()])
-
-    # num_train_optimization_steps = int(
-    #     train_dataset.num_dataset
-    #     / task_batch_size
-    #     / args.gradient_accumulation_steps
-    # ) * (args.num_train_epochs - args.start_epoch)
-
-    # num_train_optimization_steps = int(
-    #     train_dataset.num_dataset
-    #     / task_batch_size
-    #     / args.gradient_accumulation_steps
-    # ) * (args.num_train_epochs - args.start_epoch)
     num_train_optimization_steps = 10
     num_labels = len(labels)
     if args.dynamic_attention:
@@ -491,34 +456,6 @@ def main():
     elif args.optim == "RAdam":
         optimizer = RAdam(optimizer_grouped_parameters, lr=base_lr, weight_decay=1e-4)
 
-    # warmpu_steps = args.warmup_proportion * num_train_optimization_steps
-
-    # if args.lr_scheduler == "warmup_linear":
-    #     warmup_scheduler = WarmupLinearSchedule(
-    #         optimizer, warmup_steps=warmpu_steps, t_total=num_train_optimization_steps
-    #     )
-    # else:
-    #     warmup_scheduler = WarmupConstantSchedule(optimizer, warmup_steps=warmpu_steps)
-    #
-    # lr_reduce_list = np.array([5, 7])
-    # if args.lr_scheduler == "automatic":
-    #     lr_scheduler = ReduceLROnPlateau(
-    #         optimizer, mode="max", factor=0.2, patience=1, cooldown=1, threshold=0.001
-    #     )
-    # elif args.lr_scheduler == "cosine":
-    #     lr_scheduler = CosineAnnealingLR(
-    #         optimizer, T_max=median_num_iter * args.num_train_epochs
-    #     )
-    # elif args.lr_scheduler == "cosine_warm":
-    #     lr_scheduler = CosineAnnealingWarmRestarts(
-    #         # optimizer, T_0=median_num_iter * args.num_train_epochs
-    #     )
-    # elif args.lr_scheduler == "mannul":
-    #
-    #     def lr_lambda_fun(epoch):
-    #         return pow(0.2, np.sum(lr_reduce_list <= epoch))
-    #
-    #     lr_scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda_fun)
 
     startIterID = 0
     global_step = 0
@@ -585,7 +522,9 @@ def main():
     #             # ):
     # args['start_epoch'] = 0
     # args.num_train_epochs
-    criterion = nn.BCELoss()
+    # criterion = nn.BCELoss()
+
+    criterion = nn.BCEWithLogitsLoss()
     target_path = os.path.join(task_cfg[task]["dataroot"], "all_targets_json.json")
     all_targets = json.load(open(target_path, "r"))
     model = model.to(device)
@@ -608,8 +547,17 @@ def main():
             #     model,
             #     task_losses,
             # )
-
+            is_supervised = False
             for step, batch in enumerate(train_loader):
+
+                if step % 10 == 0:
+                    is_supervised = True
+                else:
+                    is_supervised = False
+                if not is_supervised and epochId < 5:
+                    continue
+
+                model.zero_grad()
                 batch = tuple(t.to(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
                 input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
                 true_targets = []
@@ -619,19 +567,79 @@ def main():
                 true_targets = true_targets.to(device)
                 model.double()
                 model = model.to(device)
-                discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
-                    = model(
-                    input_ids,
-                    image_feat,
-                    image_loc,
-                    segment_ids,
-                    input_mask,
-                    image_mask
-                )
-                loss = criterion(discourse_prediction, true_targets.type(torch.double))
-                loss.backward()
-                optimizer.step()
-                model.zero_grad()
+
+                if is_supervised:
+
+                    discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                        = model(
+                        is_supervised,
+                        input_ids,
+                        image_feat,
+                        image_loc,
+                        segment_ids,
+                        input_mask,
+                        image_mask,
+                    )
+                    sup_loss = criterion(discourse_prediction, true_targets.type(torch.double))
+                    loss = sup_loss
+                    loss.backward()
+                    optimizer.step()
+
+                else:
+
+                    with torch.no_grad():
+                        model.eval()
+                        discourse_prediction_original, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                                = model(
+                            input_ids,
+                            image_feat,
+                            image_loc,
+                            segment_ids,
+                            input_mask,
+                            image_mask,
+                            True,
+                        )
+
+                    model.train()
+
+                    discourse_prediction_noise, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                            = model(
+                        input_ids,
+                        image_feat,
+                        image_loc,
+                        segment_ids,
+                        input_mask,
+                        image_mask,
+                        is_supervised
+                    )
+
+                    unsup_loss = criterion(discourse_prediction_noise, discourse_prediction_original)
+                    loss = unsup_loss
+                    loss.backward()
+                    optimizer.step()
+
+                    # unsup_loss = criterion(discourse_prediction_noise, temp_true)
+
+                    None
+                    #  with torch.no_grad():
+                    #
+                    # discourse_prediction_original, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                    #     = model(
+                    #     input_ids,
+                    #     image_feat,
+                    #     image_loc,
+                    #     segment_ids,
+                    #     input_mask,
+                    #     image_mask,
+                    #     is_supervised
+                    # )
+                    #
+                    # # temp_true = discourse_prediction > 0.5
+                    # # temp_true = temp_true.double()
+                    # # unsup_loss = criterion(discourse_prediction, temp_true)
+
+
+
                 print("train train train done")
             #
 
@@ -797,8 +805,8 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
     avg_micro = 0
     counter  = 0
 
-    pred = np.zeros((len(test_dataset.num_dataset), len(labels)))
-    Y = np.zeros((len(test_dataset.num_dataset), len(labels)))
+    pred = np.zeros((test_dataset.num_dataset, len(labels)))
+    Y = np.zeros((test_dataset.num_dataset, len(labels)))
     i = 0
     with torch.no_grad():
         for batch in test_loader:
@@ -813,6 +821,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
             model = model.to(device)
             discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
                 = model(
+                True,
                 input_ids,
                 image_feat,
                 image_loc,
@@ -824,6 +833,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
             # loss = criterion(discourse_prediction, true_targets.type(torch.double))
             #
         # print(loss)
+            discourse_prediction = torch.sigmoid(discourse_prediction)
             discourse_prediction = discourse_prediction.to('cpu')
             true_targets = true_targets.to('cpu')
             res = compute_score(discourse_prediction, true_targets.type(torch.float), 0.5)
