@@ -583,7 +583,8 @@ def evaluate(model,kmeans, device, task_cfg, tokenizer, args, labels):
         pin_memory=True,
     )
 
-    cluster_label_map = np.zeros(len(labels), len(labels))
+    cluster_label_map = np.zeros((len(labels), len(labels)))
+    label_label_map = np.zeros((len(labels), len(labels)))
     with torch.no_grad():
         for batch in test_loader:
 
@@ -609,9 +610,17 @@ def evaluate(model,kmeans, device, task_cfg, tokenizer, args, labels):
             preds = kmeans.predict(pooled_output.to('cpu'))
 
             for clstr_indx, y_true in zip(preds, true_targets):
-                cluster_label_map[clstr_indx] += y_true
+                cluster_label_map[clstr_indx] += y_true.cpu().numpy()
+
+            for y_true in true_targets:
+                for l, _ in enumerate(labels):
+                    if y_true[l] == 1:
+                        label_label_map[l] += label_label_map
         print("********** clstr labels is    *******")
         print(cluster_label_map)
+        print("********** label labels is    *******")
+        print(label_label_map)
+
 
 
 
