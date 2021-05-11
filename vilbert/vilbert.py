@@ -1692,6 +1692,7 @@ class VILBertForVLTasks(BertPreTrainedModel):
             pooled_output = self.dropout(pooled_output_t * pooled_output_v)
         else:
             assert False
+        main_pooled_output = pooled_output_t * pooled_output_v
         if not is_supervised:
             from torch.distributions.uniform import Uniform
             self.uni_dist = Uniform(-0.3, 0.3)
@@ -1713,6 +1714,7 @@ class VILBertForVLTasks(BertPreTrainedModel):
         ).unsqueeze(2).to(dtype=next(self.parameters()).dtype)
         linguisic_logit = self.linguisic_logit(self.dropout(sequence_output_t))
         return (
+            main_pooled_output,
             discourse_prediction,
             vil_prediction,
             vil_prediction_gqa,
