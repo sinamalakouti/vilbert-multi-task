@@ -510,7 +510,7 @@ def main():
         print("  Batch size: ", batch_size)
         print("  Num steps: %d" % num_train_optimization_steps)
 
-    target_path = os.path.join(task_cfg[task]["dataroot"], "vilbert/all_targets_json.json")
+    target_path = os.path.join(task_cfg[task]["dataroot"], "all_targets_json.json")
     all_targets = json.load(open(target_path, "r"))
     model = model.to(device)
     print(next(model.parameters()).is_cuda)
@@ -550,7 +550,7 @@ def main():
 def evaluate(model,kmeans, device, task_cfg, tokenizer, args, labels):
     model.eval()
     task = "TASK0"
-    target_path = os.path.join(task_cfg[task]["test_dataroot"], "vilbert/all_targets_json.json")
+    target_path = os.path.join(task_cfg[task]["test_dataroot"], "all_targets_json.json")
     batch_size = 64
     test_dataset = DiscourseRelationDataset(
         labels,
