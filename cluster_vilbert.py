@@ -522,6 +522,8 @@ def main():
             print("##########  STEP @ {} ##########".format(step))
             batch = tuple(t.to(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
             input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
+            print(input_ids.shape)
+            print(len(train_loader))
             true_targets = []
             for id in image_id:
                 true_targets.append(np.fromiter(all_targets[id].values(), dtype=np.double))
@@ -542,7 +544,7 @@ def main():
             kmeans.partial_fit(pooled_output.to('cpu'))
 
 
-        evaluate(model, device, task_cfg, tokenizer, args, labels)
+        evaluate(model, kmeans, device, task_cfg, tokenizer, args, labels)
 
 
 
@@ -584,6 +586,7 @@ def evaluate(model,kmeans, device, task_cfg, tokenizer, args, labels):
     cluster_label_map = np.zeros(len(labels), len(labels))
     with torch.no_grad():
         for batch in test_loader:
+
             batch = tuple(t.to(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
             input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
             true_targets = []
