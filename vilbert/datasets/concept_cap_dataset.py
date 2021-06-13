@@ -466,12 +466,12 @@ class BertPreprocessBatch(object):
 
         cur_example = InputExample(
             image_feat=image_feature,
-            image_target=image_target,
+            image_target=image_target, #todo
             caption=tokens_caption,
-            is_next=label,
+            is_next=label,  #todo
             image_loc=image_location,
             num_boxes=num_boxes,
-            overlaps=overlaps,
+            overlaps=overlaps,  #todo
         )
 
         # transform sample to features
@@ -483,15 +483,15 @@ class BertPreprocessBatch(object):
             cur_features.input_ids,
             cur_features.input_mask,
             cur_features.segment_ids,
-            cur_features.lm_label_ids,
-            cur_features.is_next,
+            cur_features.lm_label_ids,  #todo
+            cur_features.is_next, #todo
             cur_features.image_feat,
             cur_features.image_loc,
-            cur_features.image_target,
-            cur_features.image_label,
+            cur_features.image_target, #todo
+            cur_features.image_label, #todo
             cur_features.image_mask,
-            cur_features.masked_label,
-            image_id,
+            cur_features.masked_label, #todo
+            image_id, #todo
         )
         return cur_tensors
 

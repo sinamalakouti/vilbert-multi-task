@@ -619,7 +619,7 @@ def evaluate(model,kmeans, device, task_cfg, tokenizer, args, labels):
         print("********** clstr labels is    *******")
         print(cluster_label_map)
         print("********** label labels is    *******")
-        print(label_label_map)
+        print(label_label_map   )
 
 
 

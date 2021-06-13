@@ -143,45 +143,45 @@ class BertConfig(object):
     """
 
     def __init__(
-        self,
-        vocab_size_or_config_json_file,
-        hidden_size=768,
-        num_hidden_layers=12,
-        num_attention_heads=12,
-        intermediate_size=3072,
-        hidden_act="gelu",
-        hidden_dropout_prob=0.1,
-        attention_probs_dropout_prob=0.1,
-        max_position_embeddings=512,
-        type_vocab_size=2,
-        initializer_range=0.02,
-        v_feature_size=2048,
-        v_target_size=1601,
-        v_hidden_size=768,
-        v_num_hidden_layers=3,
-        v_num_attention_heads=12,
-        v_intermediate_size=3072,
-        bi_hidden_size=1024,
-        bi_num_attention_heads=16,
-        v_attention_probs_dropout_prob=0.1,
-        v_hidden_act="gelu",
-        v_hidden_dropout_prob=0.1,
-        v_initializer_range=0.2,
-        v_biattention_id=[0, 1],
-        t_biattention_id=[10, 11],
-        visual_target=0,
-        fast_mode=False,
-        fixed_v_layer=0,
-        fixed_t_layer=0,
-        in_batch_pairs=False,
-        fusion_method="mul",
-        dynamic_attention=False,
-        with_coattention=True,
-        objective=0,
-        num_negative=128,
-        model="bert",
-        task_specific_tokens=False,
-        visualization=False,
+            self,
+            vocab_size_or_config_json_file,
+            hidden_size=768,
+            num_hidden_layers=12,
+            num_attention_heads=12,
+            intermediate_size=3072,
+            hidden_act="gelu",
+            hidden_dropout_prob=0.1,
+            attention_probs_dropout_prob=0.1,
+            max_position_embeddings=512,
+            type_vocab_size=2,
+            initializer_range=0.02,
+            v_feature_size=2048,
+            v_target_size=1601,
+            v_hidden_size=768,
+            v_num_hidden_layers=3,
+            v_num_attention_heads=12,
+            v_intermediate_size=3072,
+            bi_hidden_size=1024,
+            bi_num_attention_heads=16,
+            v_attention_probs_dropout_prob=0.1,
+            v_hidden_act="gelu",
+            v_hidden_dropout_prob=0.1,
+            v_initializer_range=0.2,
+            v_biattention_id=[0, 1],
+            t_biattention_id=[10, 11],
+            visual_target=0,
+            fast_mode=False,
+            fixed_v_layer=0,
+            fixed_t_layer=0,
+            in_batch_pairs=False,
+            fusion_method="mul",
+            dynamic_attention=False,
+            with_coattention=True,
+            objective=0,
+            num_negative=128,
+            model="bert",
+            task_specific_tokens=False,
+            visualization=False,
     ):
 
         """Constructs BertConfig.
@@ -213,8 +213,8 @@ class BertConfig(object):
         assert max(t_biattention_id) < num_hidden_layers
 
         if isinstance(vocab_size_or_config_json_file, str) or (
-            sys.version_info[0] == 2
-            and isinstance(vocab_size_or_config_json_file, unicode)
+                sys.version_info[0] == 2
+                and isinstance(vocab_size_or_config_json_file, unicode)
         ):
             with open(vocab_size_or_config_json_file, "r", encoding="utf-8") as reader:
                 json_config = json.loads(reader.read())
@@ -300,6 +300,7 @@ except ImportError:
     logger.info(
         "Better speed can be achieved with apex installed from https://www.github.com/nvidia/apex ."
     )
+
 
     class BertLayerNorm(nn.Module):
         def __init__(self, hidden_size, eps=1e-12):
@@ -491,7 +492,7 @@ class BertIntermediate(nn.Module):
         super(BertIntermediate, self).__init__()
         self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
         if isinstance(config.hidden_act, str) or (
-            sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)
+                sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)
         ):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -652,7 +653,7 @@ class BertImageIntermediate(nn.Module):
         super(BertImageIntermediate, self).__init__()
         self.dense = nn.Linear(config.v_hidden_size, config.v_intermediate_size)
         if isinstance(config.v_hidden_act, str) or (
-            sys.version_info[0] == 2 and isinstance(config.v_hidden_act, unicode)
+                sys.version_info[0] == 2 and isinstance(config.v_hidden_act, unicode)
         ):
             self.intermediate_act_fn = ACT2FN[config.v_hidden_act]
         else:
@@ -736,13 +737,13 @@ class BertBiAttention(nn.Module):
         return x.permute(0, 2, 1, 3)
 
     def forward(
-        self,
-        input_tensor1,
-        attention_mask1,
-        input_tensor2,
-        attention_mask2,
-        co_attention_mask=None,
-        use_co_attention_mask=False,
+            self,
+            input_tensor1,
+            attention_mask1,
+            input_tensor2,
+            attention_mask2,
+            co_attention_mask=None,
+            use_co_attention_mask=False,
     ):
 
         # for vision input.
@@ -842,7 +843,6 @@ class BertBiOutput(nn.Module):
         self.q_dropout2 = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states1, input_tensor1, hidden_states2, input_tensor2):
-
         context_state1 = self.dense1(hidden_states1)
         context_state1 = self.dropout1(context_state1)
 
@@ -869,15 +869,14 @@ class BertConnectionLayer(nn.Module):
         self.t_output = BertOutput(config)
 
     def forward(
-        self,
-        input_tensor1,
-        attention_mask1,
-        input_tensor2,
-        attention_mask2,
-        co_attention_mask=None,
-        use_co_attention_mask=False,
+            self,
+            input_tensor1,
+            attention_mask1,
+            input_tensor2,
+            attention_mask2,
+            co_attention_mask=None,
+            use_co_attention_mask=False,
     ):
-
         bi_output1, bi_output2, co_attention_probs = self.biattention(
             input_tensor1,
             attention_mask1,
@@ -932,15 +931,15 @@ class BertEncoder(nn.Module):
         )
 
     def forward(
-        self,
-        txt_embedding,
-        image_embedding,
-        txt_attention_mask,
-        txt_attention_mask2,
-        image_attention_mask,
-        co_attention_mask=None,
-        output_all_encoded_layers=True,
-        output_all_attention_masks=False,
+            self,
+            txt_embedding,
+            image_embedding,
+            txt_attention_mask,
+            txt_attention_mask2,
+            image_attention_mask,
+            co_attention_mask=None,
+            output_all_encoded_layers=True,
+            output_all_attention_masks=False,
     ):
 
         v_start = 0
@@ -1010,34 +1009,34 @@ class BertEncoder(nn.Module):
                 # new batch size is the batch_size ^2
                 image_embedding = (
                     image_embedding.unsqueeze(0)
-                    .expand(batch_size, batch_size, num_regions, v_hidden_size)
-                    .contiguous()
-                    .view(batch_size * batch_size, num_regions, v_hidden_size)
+                        .expand(batch_size, batch_size, num_regions, v_hidden_size)
+                        .contiguous()
+                        .view(batch_size * batch_size, num_regions, v_hidden_size)
                 )
                 image_attention_mask = (
                     image_attention_mask.unsqueeze(0)
-                    .expand(batch_size, batch_size, 1, 1, num_regions)
-                    .contiguous()
-                    .view(batch_size * batch_size, 1, 1, num_regions)
+                        .expand(batch_size, batch_size, 1, 1, num_regions)
+                        .contiguous()
+                        .view(batch_size * batch_size, 1, 1, num_regions)
                 )
 
                 txt_embedding = (
                     txt_embedding.unsqueeze(1)
-                    .expand(batch_size, batch_size, num_words, t_hidden_size)
-                    .contiguous()
-                    .view(batch_size * batch_size, num_words, t_hidden_size)
+                        .expand(batch_size, batch_size, num_words, t_hidden_size)
+                        .contiguous()
+                        .view(batch_size * batch_size, num_words, t_hidden_size)
                 )
                 txt_attention_mask = (
                     txt_attention_mask.unsqueeze(1)
-                    .expand(batch_size, batch_size, 1, 1, num_words)
-                    .contiguous()
-                    .view(batch_size * batch_size, 1, 1, num_words)
+                        .expand(batch_size, batch_size, 1, 1, num_words)
+                        .contiguous()
+                        .view(batch_size * batch_size, 1, 1, num_words)
                 )
                 co_attention_mask = (
                     co_attention_mask.unsqueeze(1)
-                    .expand(batch_size, batch_size, 1, num_regions, num_words)
-                    .contiguous()
-                    .view(batch_size * batch_size, 1, num_regions, num_words)
+                        .expand(batch_size, batch_size, 1, num_regions, num_words)
+                        .contiguous()
+                        .view(batch_size * batch_size, 1, num_regions, num_words)
                 )
 
             if count == 0 and self.FAST_MODE:
@@ -1143,7 +1142,7 @@ class BertPredictionHeadTransform(nn.Module):
         super(BertPredictionHeadTransform, self).__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         if isinstance(config.hidden_act, str) or (
-            sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)
+                sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)
         ):
             self.transform_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -1162,7 +1161,7 @@ class BertImgPredictionHeadTransform(nn.Module):
         super(BertImgPredictionHeadTransform, self).__init__()
         self.dense = nn.Linear(config.v_hidden_size, config.v_hidden_size)
         if isinstance(config.hidden_act, str) or (
-            sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)
+                sys.version_info[0] == 2 and isinstance(config.hidden_act, unicode)
         ):
             self.transform_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -1227,7 +1226,7 @@ class BertPreTrainingHeads(nn.Module):
         self.dropout = nn.Dropout(0.1)
 
     def forward(
-        self, sequence_output_t, sequence_output_v, pooled_output_t, pooled_output_v
+            self, sequence_output_t, sequence_output_v, pooled_output_t, pooled_output_v
     ):
 
         if self.fusion_method == "sum":
@@ -1308,17 +1307,17 @@ class BertModel(BertPreTrainedModel):
         self.apply(self.init_weights)
 
     def forward(
-        self,
-        input_txt,
-        input_imgs,
-        image_loc,
-        token_type_ids=None,
-        attention_mask=None,
-        image_attention_mask=None,
-        co_attention_mask=None,
-        task_ids=None,
-        output_all_encoded_layers=False,
-        output_all_attention_masks=False,
+            self,
+            input_txt,
+            input_imgs,
+            image_loc,
+            token_type_ids=None,
+            attention_mask=None,
+            image_attention_mask=None,
+            co_attention_mask=None,
+            task_ids=None,
+            output_all_encoded_layers=False,
+            output_all_attention_masks=False,
     ):
         if attention_mask is None:
             attention_mask = torch.ones_like(input_txt)
@@ -1478,18 +1477,18 @@ class BertForMultiModalPreTraining(BertPreTrainedModel):
         )
 
     def forward(
-        self,
-        input_ids,
-        image_feat,
-        image_loc,
-        token_type_ids=None,
-        attention_mask=None,
-        image_attention_mask=None,
-        masked_lm_labels=None,
-        image_label=None,
-        image_target=None,
-        next_sentence_label=None,
-        output_all_attention_masks=False,
+            self,
+            input_ids,
+            image_feat,
+            image_loc,
+            token_type_ids=None,
+            attention_mask=None,
+            image_attention_mask=None,
+            masked_lm_labels=None,
+            image_label=None,
+            image_target=None,
+            next_sentence_label=None,
+            output_all_attention_masks=False,
     ):
         # in this model, we first embed the images.
         sequence_output_t, sequence_output_v, pooled_output_t, pooled_output_v, all_attention_mask = self.bert(
@@ -1508,9 +1507,9 @@ class BertForMultiModalPreTraining(BertPreTrainedModel):
         )
 
         if (
-            masked_lm_labels is not None
-            and next_sentence_label is not None
-            and image_target is not None
+                masked_lm_labels is not None
+                and next_sentence_label is not None
+                and image_target is not None
         ):
             prediction_scores_v = prediction_scores_v[:, 1:]
             if self.visual_target == 1:
@@ -1561,7 +1560,7 @@ class BertForMultiModalPreTraining(BertPreTrainedModel):
                     row_inside_index[i] = i
                 for i in range(num_regions - 1):
                     col_inside_index[:, i, :][col_inside_index[:, i, :] == i] = (
-                        num_regions - 1
+                            num_regions - 1
                     )
                 final_inside_index = row_inside_index * num_regions + col_inside_index
 
@@ -1616,7 +1615,9 @@ class VILBertForVLTasks(BertPreTrainedModel):
         self.cls = BertPreTrainingHeads(
             config, self.bert.embeddings.word_embeddings.weight
         )
-        self.discourse_prediction = Discourse_classifier(config.bi_hidden_size, config.bi_hidden_size * 2, num_labels, 0.5)
+        self.discourse_prediction = Discourse_classifier(config.bi_hidden_size, config.bi_hidden_size * 2, num_labels,
+                                                         0.5)
+        self.allignment_prediction = Allignment_classifier(config.bi_hidden_size, 2)
         self.vil_prediction = SimpleClassifier(
             config.bi_hidden_size, config.bi_hidden_size * 2, 3129, 0.5
         )
@@ -1646,20 +1647,19 @@ class VILBertForVLTasks(BertPreTrainedModel):
         )
 
     def forward(
-        self,
-        is_supervised,
-        input_txt,
-        input_imgs,
-        image_loc,
-        token_type_ids=None,
-        attention_mask=None,
-        image_attention_mask=None,
-        co_attention_mask=None,
-        task_ids=None,
-        output_all_encoded_layers=False,
-        output_all_attention_masks=False,
+            self,
+            is_supervised,
+            input_txt,
+            input_imgs,
+            image_loc,
+            token_type_ids=None,
+            attention_mask=None,
+            image_attention_mask=None,
+            co_attention_mask=None,
+            task_ids=None,
+            output_all_encoded_layers=False,
+            output_all_attention_masks=False,
     ):
-
 
         sequence_output_t, sequence_output_v, pooled_output_t, pooled_output_v, all_attention_mask = self.bert(
             input_txt,
@@ -1700,7 +1700,7 @@ class VILBertForVLTasks(BertPreTrainedModel):
             pooled_output = pooled_output.mul(noise_vector) + pooled_output
 
         discourse_prediction = self.discourse_prediction(pooled_output)
-
+        allignment_prediction  = self.allignment_prediction(pooled_output)
         vil_prediction = self.vil_prediction(pooled_output)
         vil_prediction_gqa = self.vil_prediction_gqa(pooled_output)
         if pooled_output.size(0) % 2 == 0:
@@ -1710,12 +1710,13 @@ class VILBertForVLTasks(BertPreTrainedModel):
         vil_logit = self.vil_logit(pooled_output)
         vil_tri_prediction = self.vil_tri_prediction(pooled_output)
         vision_logit = self.vision_logit(self.dropout(sequence_output_v)) + (
-            (1.0 - image_attention_mask) * -10000.0
+                (1.0 - image_attention_mask) * -10000.0
         ).unsqueeze(2).to(dtype=next(self.parameters()).dtype)
         linguisic_logit = self.linguisic_logit(self.dropout(sequence_output_t))
         return (
             main_pooled_output,
             discourse_prediction,
+            allignment_prediction,
             vil_prediction,
             vil_prediction_gqa,
             vil_logit,
@@ -1729,6 +1730,13 @@ class VILBertForVLTasks(BertPreTrainedModel):
         )
 
 
+class Allignment_classifier(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super().__init__()
+        self.logit_fc = nn.Linear(in_dim, out_dim)
+
+    def forward(self, hidden_states):
+        return self.logit_fc(hidden_states)
 
 
 class Discourse_classifier(nn.Module):
@@ -1745,6 +1753,7 @@ class Discourse_classifier(nn.Module):
     def forward(self, hidden_states):
         return self.logit_fc(hidden_states)
 
+
 class SimpleClassifier(nn.Module):
     def __init__(self, in_dim, hid_dim, out_dim, dropout):
         super().__init__()
@@ -1757,7 +1766,6 @@ class SimpleClassifier(nn.Module):
 
     def forward(self, hidden_states):
         return self.logit_fc(hidden_states)
-
 
 # class SimpleClassifier(nn.Module):
 #     def __init__(self, in_dim, hid_dim, out_dim, dropout):

@@ -59,7 +59,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
+    # os.environ['C UDA_VISIBLE_DEVICES'] = "0,1"
     batch_size = 64
     parser = argparse.ArgumentParser()
 
@@ -319,7 +319,7 @@ def main():
         args.bert_model, do_lower_case=args.do_lower_case
     )
 
-    labels = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant']
+    labels = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant','Other']
     train_dataset = DiscourseRelationDataset(
         labels,
         task_cfg[task]["dataroot"],
@@ -585,7 +585,7 @@ def main():
     #             # ):
     # args['start_epoch'] = 0
     # args.num_train_epochs
-    criterion = nn.BCELoss()
+    criterion = nn.BCEWithLogitsLoss()
     target_path = os.path.join(task_cfg[task]["dataroot"], "all_targets_json.json")
     all_targets = json.load(open(target_path, "r"))
     model = model.to(device)
@@ -621,6 +621,7 @@ def main():
                 model = model.to(device)
                 discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
                     = model(
+                    True,
                     input_ids,
                     image_feat,
                     image_loc,
@@ -813,6 +814,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
             model = model.to(device)
             discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
                 = model(
+                True,
                 input_ids,
                 image_feat,
                 image_loc,

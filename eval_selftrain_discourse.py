@@ -23,7 +23,8 @@ import sys
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from vilbert.datasets.discourse_relation_dataset import DiscourseRelationDataset
+# from vilbert.datasets.discourse_relation_dataset import DiscourseRelationDataset
+from vilbert.datasets.discoure_dataset_semisupervised import DiscourseRelationDataset
 from pytorch_transformers.tokenization_bert import BertTokenizer
 from torch.utils.data import DataLoader, Dataset, RandomSampler
 
@@ -59,7 +60,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
+    # os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
     batch_size = 64
     parser = argparse.ArgumentParser()
 
@@ -283,7 +284,7 @@ def main():
     else:
         torch.cuda.set_device(args.local_rank)
         device = torch.device("cuda", args.local_rank)
-        n_gpu = 1
+        n_gpu = 3
         torch.distributed.init_process_group(backend="nccl")
 
     logger.info(
@@ -320,6 +321,7 @@ def main():
     )
 
     labels = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant', 'Other']
+    # labels = ["Visible", 'Subjective', 'Action', 'Story', 'Meta', 'Irrelevant']
     train_dataset = DiscourseRelationDataset(
         labels,
         task_cfg[task]["dataroot"],
@@ -557,9 +559,10 @@ def main():
                 if not is_supervised and epochId < 5:
                     continue
 
+
                 model.zero_grad()
                 batch = tuple(t.to(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
-                input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
+                input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id, unsup_tokens, unsup_labels = (batch)
                 true_targets = []
                 for id in image_id:
                     true_targets.append(np.fromiter(all_targets[id].values(), dtype=np.double))
@@ -569,8 +572,9 @@ def main():
                 model = model.to(device)
 
                 if is_supervised:
+                    print("supervised subjects:    ", image_id)
 
-                    discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                    _, discourse_prediction, _, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
                         = model(
                         is_supervised,
                         input_ids,
@@ -586,61 +590,77 @@ def main():
                     optimizer.step()
 
                 else:
+                    print("unsuper subjects:    ", image_id)
 
-                    with torch.no_grad():
-                        model.eval()
-                        discourse_prediction_original, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
-                                = model(
-                            input_ids,
-                            image_feat,
-                            image_loc,
-                            segment_ids,
-                            input_mask,
-                            image_mask,
-                            True,
-                        )
-
-                    model.train()
-
-                    discourse_prediction_noise, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
-                            = model(
-                        input_ids,
+                    unsup_criterion = torch.nn.CrossEntropyLoss(ignore_index=-1)
+                    _, discourse_prediction, allignment_pred, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                        = model(
+                        is_supervised,
+                        unsup_tokens,
                         image_feat,
                         image_loc,
                         segment_ids,
                         input_mask,
                         image_mask,
-                        is_supervised
                     )
-
-                    unsup_loss = criterion(discourse_prediction_noise, discourse_prediction_original)
-                    loss = unsup_loss
-                    loss.backward()
+                    unsup_loss = unsup_criterion(allignment_pred, unsup_labels)
+                    unsup_loss.backward()
                     optimizer.step()
-
-                    # unsup_loss = criterion(discourse_prediction_noise, temp_true)
-
-                    None
-                    #  with torch.no_grad():
+                    # with torch.no_grad():
+                    #     model.eval()
+                    #     discourse_prediction_original, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                    #             = model(
+                    #         True,
+                    #         input_ids,
+                    #         image_feat,
+                    #         image_loc,
+                    #         segment_ids,
+                    #         input_mask,
+                    #         image_mask,
                     #
-                    # discourse_prediction_original, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
-                    #     = model(
+                    #     )
+                    #
+                    # model.train()
+                    #
+                    # discourse_prediction_noise, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                    #         = model(
+                    #     is_supervised,
                     #     input_ids,
                     #     image_feat,
                     #     image_loc,
                     #     segment_ids,
                     #     input_mask,
                     #     image_mask,
-                    #     is_supervised
                     # )
                     #
-                    # # temp_true = discourse_prediction > 0.5
-                    # # temp_true = temp_true.double()
-                    # # unsup_loss = criterion(discourse_prediction, temp_true)
+                    # unsup_loss = criterion(discourse_prediction_noise, discourse_prediction_original)
+                    # loss = unsup_loss
+                    # loss.backward()
+                    # optimizer.step()
+                    #
+                    # # unsup_loss = criterion(discourse_prediction_noise, temp_true)
+                    #
+                    # # None
+                    # #  with torch.no_grad():
+                    # #
+                    # # discourse_prediction_original, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+                    # #     = model(
+                    # #     input_ids,
+                    # #     image_feat,
+                    # #     image_loc,
+                    # #     segment_ids,
+                    # #     input_mask,
+                    # #     image_mask,
+                    # #     is_supervised
+                    # # )
+                    # #
+                    # # # temp_true = discourse_prediction > 0.5
+                    # # # temp_true = temp_true.double()
+                    # # # unsup_loss = criterion(discourse_prediction, temp_true)
 
 
 
-                print("train train train done")
+                    print("train train train done")
             #
 
             print("*********** ITERATION {}  ***********".format(epochId))
@@ -811,7 +831,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
     with torch.no_grad():
         for batch in test_loader:
             batch = tuple(t.to(device=device, non_blocking=True) if type(t) == torch.Tensor else t for t in batch)
-            input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id = (batch)
+            input_ids, input_mask, segment_ids, image_feat, image_loc, image_mask, image_id, tokens_unsup, labels_unsup = (batch)
             true_targets = []
             for id in image_id:
                 true_targets.append(np.fromiter(all_targets[id].values(), dtype=np.double))
@@ -819,7 +839,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
             true_targets = true_targets.to(device)
             model.double()
             model = model.to(device)
-            discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+            _,discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
                 = model(
                 True,
                 input_ids,
