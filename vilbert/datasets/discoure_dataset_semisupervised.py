@@ -398,7 +398,7 @@ class DiscourseRelationDataset(object):
         tokens_unsup = example.caption_unsup
         labels_unsup  = example.labels_unsup
         # overlaps = example.overlaps
-
+        tokens_unsup = tokens_unsup[0]
         self._truncate_seq_pair(tokens, max_seq_length - 2)
         self.__truncate_seq_pair(tokens_unsup, max_seq_length - 2)
         # tokens, tokens_label = self.random_word(tokens, tokenizer, is_next)
@@ -409,7 +409,7 @@ class DiscourseRelationDataset(object):
         # concatenate lm labels and account for CLS, SEP, SEP
         # lm_label_ids = [-1] + tokens_label + [-1]
         tokens = tokenizer.add_special_tokens_single_sentence(tokens)
-        tokens_unsup = tokenizer.add_special_tokens_single_sentence(tokens_unsup[0])
+        tokens_unsup = tokenizer.add_special_tokens_single_sentence(tokens_unsup)
         segment_ids = [0] * len(tokens)
 
         input_ids = tokens  # tokenizer.convert_tokens_to_ids(tokens)
