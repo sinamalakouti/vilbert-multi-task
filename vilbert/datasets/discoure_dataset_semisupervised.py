@@ -586,6 +586,8 @@ class DiscourseRelationDataset(object):
         """
         # add the hard negative mining objective here.
         rand_doc_idx = random.randint(0, self.num_dataset - 1)
+        while 'pic' + str(rand_doc_idx) not in self.captions:
+            rand_doc_idx = random.randint(0, self.num_dataset - 1)
         caption = self.captions['pic' + str(rand_doc_idx)]
 
         return caption
