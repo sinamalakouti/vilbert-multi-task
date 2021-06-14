@@ -348,6 +348,7 @@ def main():
         batch_size= batch_size,
         num_workers=0,
         pin_memory=True,
+        shuffle=False
     )
     # for i in train_loader:
     #     print("hello")
