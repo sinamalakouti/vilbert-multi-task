@@ -1693,11 +1693,11 @@ class VILBertForVLTasks(BertPreTrainedModel):
         else:
             assert False
         main_pooled_output = pooled_output_t * pooled_output_v
-        if not is_supervised:
-            from torch.distributions.uniform import Uniform
-            self.uni_dist = Uniform(-0.3, 0.3)
-            noise_vector = self.uni_dist.sample(pooled_output.shape[1:]).to(pooled_output.device).unsqueeze(0)
-            pooled_output = pooled_output.mul(noise_vector) + pooled_output
+        # if not is_supervised:
+        #     from torch.distributions.uniform import Uniform
+        #     self.uni_dist = Uniform(-0.3, 0.3)
+        #     noise_vector = self.uni_dist.sample(pooled_output.shape[1:]).to(pooled_output.device).unsqueeze(0)
+        #     pooled_output = pooled_output.mul(noise_vector) + pooled_output
 
         discourse_prediction = self.discourse_prediction(pooled_output)
         allignment_prediction  = self.allignment_prediction(pooled_output)

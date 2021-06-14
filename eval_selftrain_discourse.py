@@ -839,7 +839,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
             true_targets = true_targets.to(device)
             model.double()
             model = model.to(device)
-            _,discourse_prediction, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
+            _,discourse_prediction, _, vil_prediction, vil_prediction_gqa, vil_logit, vil_binary_prediction, vil_tri_prediction, vision_prediction, vision_logit, linguisic_prediction, linguisic_logit, _ \
                 = model(
                 True,
                 input_ids,
