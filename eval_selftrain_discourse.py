@@ -60,8 +60,8 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    # os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
-    batch_size = 64
+    os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
+    batch_size = 32
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -788,7 +788,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
     model.eval()
     task = "TASK0"
     target_path = os.path.join(task_cfg[task]["test_dataroot"], "all_targets_json.json")
-    batch_size = 64
+    batch_size = 32
     test_dataset = DiscourseRelationDataset(
         labels,
         task_cfg[task]["test_dataroot"],
@@ -797,7 +797,7 @@ def evaluate(model, device, task_cfg, tokenizer, args, labels):
         task_cfg[task]["max_seq_length"],
         encoding="utf-8",
         visual_target=0,
-        batch_size=64,
+        batch_size=batch_size,
         shuffle=False,
         num_workers=2,
         cache=5000,

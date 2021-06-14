@@ -400,7 +400,7 @@ class DiscourseRelationDataset(object):
         # overlaps = example.overlaps
         tokens_unsup = tokens_unsup[0]
         self._truncate_seq_pair(tokens, max_seq_length - 2)
-        self.__truncate_seq_pair(tokens_unsup, max_seq_length - 2)
+        self._truncate_seq_pair(tokens_unsup, max_seq_length - 2)
         # tokens, tokens_label = self.random_word(tokens, tokenizer, is_next)
         # image_feat, image_loc, image_label, masked_label = self.random_region(
         #     image_feat, image_loc, num_f, is_next, overlaps
